@@ -1,3 +1,5 @@
+%TODO resolve problem about velocity constraint!!!
+
 clc;
 clear;
 %close all;
@@ -238,14 +240,13 @@ xHatSimMPC = zeros(nx, N);
 
 %init
 xHatSimMPC(:, 1) = xHatSimMPC1;
-rudHatMPC = [];%zeros(1, N);
+rudHatMPC = [];
 
 %initial value of covariance prediction error
 P_k1_k1 = guessP1_1;
 xHatEst_k1_k1 = guessX1Hat;
 
 xHatEstMPC = zeros(nx, N-1);
-% xHatEstMPC(:, 1) = guessX1Hat;
 
 %rudder value before tacking
 u_k1 = rudderBeforeTack;

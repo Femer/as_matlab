@@ -27,16 +27,6 @@ eval(['model = linModel.' nameModel ';']);
 
 %prediction horizon, in number of simulation steps
 predHor = 10;
-% Weights 
-qYawRate = 0.00001;
-qYaw = 10;
-rU = 0.001;
-sChattering = 5;
-
-%matrices
-Q = blkdiag(qYawRate, qYaw, rU);
-R = sChattering;
-
     
 % extended model xHat = [yawRate_k, yaw_k, rudder_{k-1}],
 % uHat = [rudder_{k} - rudder{k-1}];
@@ -57,15 +47,15 @@ BExt = [model.B;
 meanTsSec = model.Dt;
 display(['Horizon MPC: ' num2str(predHor * meanTsSec) ' [sec].']);
 
-%constraints
-rudderMax = 0.9;%0.9;
-rudderVelocity = 1.8 / 0.5; %command/sec: rudder can go full right to full lest in 0.5 sec
-absDeltaYaw = 10 * pi / 180;
+% %constraints
+% rudderMax = 0.9;%0.9;
+% rudderVelocity = 1.8 / 0.5; %command/sec: rudder can go full right to full lest in 0.5 sec
+% absDeltaYaw = 10 * pi / 180;
 
 %convert rudderVelocity from command/sec to command/simulationStep
 
 %every simulation step lasts meanTsSec seconds.
-rudderVelSim = rudderVelocity * meanTsSec;
+%rudderVelSim = rudderVelocity * meanTsSec;
 
 %% FORCES multistage form
 %assume variable ordering zi = [uHat_{i}; xHat_{i+1}] for i=1...N
@@ -77,9 +67,6 @@ indU_k_minus_1 = 4;
 
 stages = MultistageProblem(predHor+1);
 
-%Weight matrix for final cost
-[~, M] = dlqr(AExt, BExt, Q, R);
-
 for i = 1 : predHor+1
     
         % dimension
@@ -88,24 +75,15 @@ for i = 1 : predHor+1
         stages(i).dims.l = 2; % number of lower bounds
         stages(i).dims.u = 2; % number of upper bounds
         
-        % cost
-        if(i == predHor+1)
-            %final cost
-            stages(i).cost.H = blkdiag(zeros(nu), M);
-        else
-            stages(i).cost.H = blkdiag(R, Q);
-        end
         stages(i).cost.f = zeros(nx+nu,1); % linear cost terms
         
         % lower bounds on rudder saturation (using indU_k_minus_1) and
         % bounds on rudder velocity (using indUHat)
         stages(i).ineq.b.lbidx = [indUHat; indU_k_minus_1]; % lower bound acts on these indices
-        stages(i).ineq.b.lb = [-rudderVelSim; -rudderMax]; % lower bound for this stage variable
         
         % upper bounds on rudder saturation (using indU_k_minus_1) and
         % bounds on rudder velocity (using indUHat)
         stages(i).ineq.b.ubidx = [indUHat; indU_k_minus_1]; % upper bound acts on these indices
-        stages(i).ineq.b.ub = [rudderVelSim; rudderMax]; % upper bound for this stage variable
         
         % equality constraints
         if(i < predHor+1)
@@ -118,8 +96,11 @@ for i = 1 : predHor+1
         
 end
 
-params(1) = newParam('minusAExt_times_x0',1,'eq.c'); % RHS of first eq. constr. is a parameter   
- 
+params(1) = newParam('minusAExt_times_x0', 1, 'eq.c'); % RHS of first eq. constr. is a parameter   
+params(2) = newParam('Hessians', 1:predHor, 'cost.H', 'diag');
+params(3) = newParam('HessiansFinal', predHor+1, 'cost.H');
+params(4) = newParam('lowerBound', 1:predHor+1, 'ineq.b.lb');
+params(5) = newParam('upperBound', 1:predHor+1, 'ineq.b.ub');
 
 %% Define outputs of the solver
 outputs(1) = newOutput('u0', 1, 1:nu);

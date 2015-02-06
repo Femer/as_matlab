@@ -35,6 +35,7 @@ sChattering = 5;
 Q = blkdiag(qYawRate, qYaw, rU);
 R = sChattering;
 
+
 %rudder value before starting the tack
 rudderBeforeTack = 0; %between -0.9 and 0.9
 
@@ -110,16 +111,19 @@ xHatRef = [ 0;
             0;
             0];
 %guess on the initial state of the KF
-guessX1Hat = [  0 * pi / 180;
-                -yawRef + (0 * pi / 180);
+guessX1Hat = [  2 * pi / 180;
+                -yawRef + (5 * pi / 180);
                 rudderBeforeTack];
-guessP1_1 = blkdiag(0.0 * eye(2), 0);
+guessP1_1 = blkdiag(0.2 * eye(2), 0);
 
 %usefull index
 yawRateIndex = 1;
 yawIndex = 2;
 %another useful index for the extended state
 lastRudderIndex = 3;
+
+%Weight matrix for final cost
+[~, M] = dlqr(AExt, BExt, Q, R);
 
 % simulate
 display('Computing MPC response');
@@ -146,7 +150,7 @@ xHatEstMPC = zeros(nx, N-1);
 u_k1 = rudderBeforeTack;
 
 %assume variable ordering zi = [ui; xi+1] for i=1...N
-problem.z1 = zeros(nx+nu,1);%TODO: CHEK THIS!
+problem.z1 = zeros(nx+nu,1);%TODO: CHECK THIS!
 for k = 1 : N-1
     
    %we are starting now the step k, prediction phase
@@ -167,6 +171,10 @@ for k = 1 : N-1
    
    %compute MPC control input using meas 
    problem.minusAExt_times_x0 = -AExt * xHatEstMPC(:, k);
+   problem.Hessians = [sChattering; qYawRate; qYaw; rU]; %H
+   problem.HessiansFinal = blkdiag(zeros(nu), M); %H at final step
+   problem.lowerBound = [-rudderVelSim; -rudderMax];
+   problem.upperBound = [rudderVelSim; rudderMax];
    
    [solverout, exitflag, info] = mpc_boatTack(problem);
    
