@@ -5,7 +5,7 @@ addpath(genpath('yalmip/'));
 
 yalmip('clear');
 
-typeOfModel = 'capital';%little (a,b) or capital (A,B)
+typeOfModel = 'little';%little (a,b) or capital (A,B)
 
 if(strcmp(typeOfModel, 'little'))
     %load identified model with a and b
@@ -140,8 +140,8 @@ options = sdpsettings('solver', 'mosek', 'verbose', 1);
 % Number of states and inputs
 [nx, nu] = size(BExt); 
 
-uHatMPC = sdpvar(repmat(nu,1,N), repmat(1,1,N));
-xHatMPC = sdpvar(repmat(nx,1,N+1), repmat(1,1,N+1));
+uHatMPC = sdpvar(repmat(nu,1,predHor), repmat(1,1,predHor));
+xHatMPC = sdpvar(repmat(nx,1,predHor+1), repmat(1,1,predHor+1));
 
 constraints = [];
 objective = 0;
@@ -153,7 +153,7 @@ for k = 1 : predHor
     
     %update cost function
     objective = objective + ...
-                norm(Q * (xHatRef - xHatMPC{k}), 2) + ...
+                norm(Q * xHatMPC{k}, 2) + ...
                 norm(R * uHatMPC{k}, 2);
                
     %add system dynamic to constraints
@@ -182,7 +182,7 @@ end
 [~, M, ~] = dlqr(AExt, BExt, Q, R);
 
 %add final cost 
-objective = objective + norm(M * (xHatRef - xHatMPC{predHor + 1}), 2);
+objective = objective + norm(M * xHatMPC{predHor + 1}, 2);
 
 parameters_in = xHatMPC{1};
 solutions_out = uHatMPC{1};
