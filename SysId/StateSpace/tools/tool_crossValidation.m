@@ -9,9 +9,9 @@ for indexData = 1 : numberValData
    eval(['valData = validationData.' nameValData{indexData} ';']); 
    
    inputModel = valData;
-   %if groupNSamples > 1 that means that model has been estimated using
-   %downsampled data computed by tool_downsampleAvgData. To simulate the
-   %model response, use tool_downsampleData to extract downsampled data
+   %if groupNSamples > 1 that means that time sample of the model has been changed
+   %using tool_changeModel.
+   %To simulate the model response, use tool_downsampleData to extract downsampled data
    %with the same groupNSamples, but now DO NOT use a mean value within
    %every sequence made by groupNSamples samples.
    if(groupNSamples > 1)

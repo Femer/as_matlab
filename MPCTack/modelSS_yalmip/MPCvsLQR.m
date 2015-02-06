@@ -7,6 +7,8 @@ yalmip('clear');
 
 typeOfModel = 'little';%little (a,b) or capital (A,B)
 
+display('---------- Info ----------');
+
 if(strcmp(typeOfModel, 'little'))
     %load identified model with a and b
     load('linModelScalar');
@@ -25,8 +27,28 @@ end
 
 %% tunable parameters
 
-%take the linear model to use in MPC
+%choose if you want to increase the sample time of the model you selected
+factorSampleTime = 10;
+
+%choose every how many seconds a new optimal control by the MPC must be
+%computed
+timeComputeMPC = 0.1;%seconds
+
+%prediction horizon of the MPC
+predHor = 10;
+
+%total simulation time, in seconds
+tF = 5;
+
+%take the linear model to use in simulation
 eval(['model = linModel.' nameModel ';']);
+
+%change the sample time of the model, this undersampled model will be used
+%be the MPC
+oldDt = model.Dt;
+modelDownSampled = tool_changeModelSampleTime(model, factorSampleTime);
+display(['Model for the MPC, sample time changed by a factor of ' num2str(factorSampleTime) ...
+    ': from ' num2str(oldDt) ' to ' num2str(modelDownSampled.Dt) ' [sec].']);
 
 % Weights 
 qYawRate = 0.00001;
@@ -44,13 +66,15 @@ rudderBeforeTack = 0; %between -0.9 and 0.9
 %take the sample time of the selected model, in seconds
 meanTsSec = model.Dt;
 
-%prediction horizon, in number of simulation steps
-predHor = 10;
+%convert timeComputeMPC in simulation time
+timeComputeMPCSim = round(timeComputeMPC / meanTsSec);
 
-display(['Horizon MPC: ' num2str(predHor * meanTsSec) ' [sec].']);
+%take the sample time of the model used by MPC or LQR
+meanTsSecDown = modelDownSampled.Dt;
 
-%total simulation time, in seconds
-tF = 5;
+display(['Horizon MPC: ' num2str(predHor * meanTsSecDown) ...
+         ' [sec]; number of prediction steps: ' num2str(predHor) '.']);
+display('--------------------------');
 %total simulation steps to reach tF
 N = round(tF / meanTsSec);
 
@@ -79,8 +103,8 @@ absDeltaYaw = 10 * pi / 180;
 
 %convert rudderVelocity from command/sec to command/simulationStep
 
-%every simulation step lasts meanTsSec seconds.
-rudderVelSim = rudderVelocity * meanTsSec;
+%rudder velocity based on simulation time of the model used by MPC
+rudderVelSim = rudderVelocity * meanTsSecDown;
 
 
 % extended model xHat = [yawRate_k, yaw_k, rudder_{k-1}],
@@ -97,10 +121,17 @@ BExt = [model.B;
     
 CExt = blkdiag(1, 1, 1);
 
-%use extended state space model
+%use extended state space model for the kalman filter and the lqr
 model.A = AExt;
 model.B = BExt;
 model.C = CExt;
+
+%extended even the model downsampled used by the MPC
+AExtDown = [modelDownSampled.A,                      modelDownSampled.B;
+            zeros(1, length(modelDownSampled.A)),    1];
+    
+BExtDown = [modelDownSampled.B;
+            1];
         
 %compute yawReference based on type of tack
 if(strcmp(tack, 'p2s'))
@@ -116,10 +147,10 @@ xHatRef = [ 0;
             0;
             0];
 %guess on the initial state of the KF
-guessX1Hat = [  0 * pi / 180;
-                -yawRef + (0 * pi / 180);
+guessX1Hat = [  2 * pi / 180;
+                -yawRef + (5 * pi / 180);
                 rudderBeforeTack];
-guessP1_1 = blkdiag(0.0 * eye(2), 0);
+guessP1_1 = blkdiag(0.2 * eye(2), 0);
 
 %usefull index
 yawRateIndex = 1;
@@ -127,13 +158,13 @@ yawIndex = 2;
 %another useful index for the extended state
 lastRudderIndex = 3;
 
-%% Build MPC
+%% Build MPC using model downsampled!
 display('Building MPC');
 %yalmip options
 options = sdpsettings('solver', 'mosek', 'verbose', 1);
 
 % Number of states and inputs
-[nx, nu] = size(BExt); 
+[nx, nu] = size(BExtDown); 
 
 uHatMPC = sdpvar(repmat(nu,1,predHor), repmat(1,1,predHor));
 xHatMPC = sdpvar(repmat(nx,1,predHor+1), repmat(1,1,predHor+1));
@@ -152,7 +183,7 @@ for k = 1 : predHor
                 norm(R * uHatMPC{k}, 2);
                
     %add system dynamic to constraints
-    constraints = [constraints, xHatMPC{k+1} == AExt * xHatMPC{k} + BExt * uHatMPC{k}];
+    constraints = [constraints, xHatMPC{k+1} == AExtDown * xHatMPC{k} + BExtDown * uHatMPC{k}];
     
     %limit input action to be within feasible set
     %rudder to real system = uHatMPC{k} + xHatMPC{k}(lastRudderIndex)
@@ -174,7 +205,7 @@ for k = 1 : predHor
 end
 
 %compute Riccati solution and use it as final cost
-[~, M, ~] = dlqr(AExt, BExt, Q, R);
+[~, M, ~] = dlqr(AExtDown, BExtDown, Q, R);
 
 %add final cost 
 objective = objective + norm(M * xHatMPC{predHor + 1}, 2);
@@ -185,7 +216,7 @@ solutions_out = uHatMPC{1};
 mpcController = optimizer(constraints, objective, options, parameters_in, solutions_out);
 
 
-%% Build LQR
+%% Build LQR using normally sampled model
 display('Building LQR');
 
 
@@ -194,6 +225,8 @@ display('Building LQR');
 %% Sim MPC and LQR 
 
 % ---- MPC ----
+% compute the 'real' system evolution using the normally sampled model called model.
+% run the MPC every 'factorSampleTime' simulation step
 display('Computing MPC response');
 
 %start with yawRate = 0 and yaw = -yawRef 
@@ -205,7 +238,7 @@ xHatSimMPC = zeros(nx, N);
 
 %init
 xHatSimMPC(:, 1) = xHatSimMPC1;
-rudHatMPC = zeros(1, N);
+rudHatMPC = [];%zeros(1, N);
 
 %initial value of covariance prediction error
 P_k1_k1 = guessP1_1;
@@ -216,6 +249,15 @@ xHatEstMPC = zeros(nx, N-1);
 
 %rudder value before tacking
 u_k1 = rudderBeforeTack;
+
+%simulation steps when MPC run
+timeRunMPC = [];
+
+%index to acces rudHatMPC and timeRunMPC
+indexRunMPC = 1;
+
+%input to the extended system
+uHat = 0;
 
 for k = 1 : N-1
     
@@ -232,17 +274,30 @@ for k = 1 : N-1
    if(k == 1)
        xHatEstMPC(:, 1) = guessX1Hat;
    else
-    xHatEstMPC(:, k) = xEst_k_k;
+       xHatEstMPC(:, k) = xEst_k_k;
    end
-   %compute MPC control input using meas 
-   rudHatMPC(k) = mpcController{xEst_k_k};
    
-   %update system dynamic
-   xHatSimMPC(:, k+1) = AExt * xHatSimMPC(:, k) + BExt * rudHatMPC(k);
+   %compute MPC control every timeComputeMPCSim steps
+   if(k == 1 || mod(k, timeComputeMPCSim) == 0)
+       %compute new optimal control
+       rudHatMPC(indexRunMPC) = mpcController{xEst_k_k};
+       %save simulation step when a new optimal control was comptuted
+       timeRunMPC(1, indexRunMPC) = k;
+       %update uHat
+       uHat = rudHatMPC(indexRunMPC);
+       indexRunMPC = indexRunMPC + 1;
+   else
+       %no new MPC was computed, do not change the rudder input, in the
+       %extended state model this means that uHat is 0
+       uHat = 0;
+   end
+   
+   %update system dynamic using the last rudder input computed
+   xHatSimMPC(:, k+1) = AExt * xHatSimMPC(:, k) + BExt * uHat;
    
    %save kalman filter variables at the end of step k
    P_k1_k1 = P_k_k;
-   u_k1 = rudHatMPC(k);
+   u_k1 = uHat;
    xHatEst_k1_k1 = xEst_k_k;
 end
 
@@ -255,6 +310,8 @@ xHatEstMPC(yawIndex, :) = xHatEstMPC(yawIndex, :) + yawRef;
 %from uHatMPC compute rudder sequence for the normal system (not the
 %extended one)
 rudMPC = cumsum([rudderBeforeTack, rudHatMPC]);
+%at time 0, rudder was equal to rudderBeforeTack
+timeRunMPC = [0, timeRunMPC];
 
 % ---- LQR ----
 
@@ -337,6 +394,9 @@ rudLQR = cumsum([rudderBeforeTack, rudHatLQR]);
 %compute simulation time, starting from time 0
 time = (0:N) .* meanTsSec; 
 
+%time when rudder input by MPC was computed, converted in seconds
+timeRunMPC = timeRunMPC .* meanTsSec;
+
 %compute yaw overshoot limit
 if(strcmp(tack, 'p2s'))
     limitYaw = yawRef - absDeltaYaw;
@@ -352,7 +412,6 @@ set(gcf,'name', ...
     'numbertitle', 'off');
 
 lW0 = 1.3;
-lW1 = 1.9;
 
 leg = {{'\psi real MPC', 'limit', '\psi by KF'}, ...
        {'\psi real LQR', 'limit', '\psi by KF'}, ...
@@ -361,8 +420,11 @@ leg = {{'\psi real MPC', 'limit', '\psi by KF'}, ...
 yawReal = [yawMPC;
            yawLQR];
 %rudder for the real system, NOT for the extended one    
-rudder = [rudMPC;
-          rudLQR];
+rudder{1} = rudMPC;
+rudder{2} = rudLQR;
+      
+rudderTime{1} = timeRunMPC;
+rudderTime{2} = time;
     
 %state estimated by the time vayring Kalman filter
 yawEstVector = [xHatEstMPC(2,:);
@@ -375,11 +437,11 @@ for i = 1 : 2
    title('state');
    
    plot(time(2:end), yawReal(i, :) .* 180 / pi, ...
-       'LineWidth', lW1, 'Color', [88 25 225] ./ 255);
+       'LineWidth', 1.9, 'Color', [88 25 225] ./ 255);
    hold on;
    plot([time(2) time(end)], [limitYaw limitYaw] .* 180 / pi, 'r-.', 'LineWidth', lW0);
    plot(time(2:end-1), yawEstVector(i, :) .* 180 / pi, 'c-.', ...
-       'LineWidth', lW1, 'Color', [245 86 1] ./ 255);
+       'LineWidth', 1.9, 'Color', [245 86 1] ./ 255);
    grid on;
    ylabel('[deg]');
    xlabel('Time [sec]');
@@ -397,14 +459,15 @@ for i = 1 : 2
    subplot(2, 2, index);
    title('input');
    
-   plot(time, rudder(i, :), 'm', 'LineWidth', lW1);
+   timeR = rudderTime{i};
+   plot(timeR, rudder{i}, 'm--*', 'LineWidth', 1.4);
    hold on;
-   plot([time(1) time(end)], [rudderMax rudderMax], 'r-.', 'LineWidth', lW0);
-   plot([time(1) time(end)], [-rudderMax -rudderMax], 'r-.', 'LineWidth', lW0);
+   plot([timeR(1) timeR(end)], [rudderMax rudderMax], 'r-.', 'LineWidth', lW0);
+   plot([timeR(1) timeR(end)], [-rudderMax -rudderMax], 'r-.', 'LineWidth', lW0);
    grid on;
    ylabel('Rudder [cmd]');
    xlabel('Time [sec]');
-   xlim([time(1) time(end)]);
+   xlim([timeR(1) timeR(end)]);
    legend(leg{index}, 'Location', 'southwest');
    
 end
