@@ -5,15 +5,28 @@ addpath(genpath('yalmip/'));
 
 yalmip('clear');
 
-%load identified state space model
-load('linModelScalar');
+typeOfModel = 'capital';%little (a,b) or capital (A,B)
+
+if(strcmp(typeOfModel, 'little'))
+    %load identified model with a and b
+    load('linModelScalar');
+    linModel = linModelScalar;
+    display('Model with a and b.');
+    %select wich  model you want to use
+    nameModel = 'tack8';
+else
+    %load identified model with A and B
+    load('linModelFull');
+    linModel = linModelFull;
+    display('Model with A and B.');
+    %select wich  model you want to use
+    nameModel = 'tack6';
+end
 
 %% tunable parameters
-%select wich  model you want to use
-nameModel = 'tack8';
 
 %take the linear model to use in MPC
-eval(['model = linModelScalar.' nameModel ';']);
+eval(['model = linModel.' nameModel ';']);
 
 % Weights 
 qYawRate = 0.00001;
@@ -75,21 +88,6 @@ absDeltaYaw = 10 * pi / 180;
 %every simulation step lasts meanTsSec seconds.
 rudderVelSim = rudderVelocity * meanTsSec;
 
-% Discrete model data 
-% x_k = [yawRate_k, yaw_k]' 
-
-A = [   model.a,    0;
-        model.Dt,   1];
-    
-B = [   model.b;
-        0];
-    
-C = [1, 0;
-     0, 1];
- 
-model.A = A;
-model.B = B;
-model.C = C;
 
 % extended model xHat = [yawRate_k, yaw_k, rudder_{k-1}],
 % uHat = [rudder_{k} - rudder{k-1}];
@@ -97,14 +95,15 @@ model.C = C;
 % LQR and in the MPC. Since the LQR can have a cost function of the form
 % x' * Q * x + u' * R * u, that tries to bring the system to the origin, we
 % start with a yaw angle = -yawRef and we bring the system to the origin.
-AExt = [A,                      B;
-        zeros(1, length(A)),    1];
+AExt = [model.A,                      model.B;
+        zeros(1, length(model.A)),    1];
     
-BExt = [B;
+BExt = [model.B;
         1];
     
-CExt = blkdiag(C, 1);
+CExt = blkdiag(1, 1, 1);
 
+%use extended state space model
 model.A = AExt;
 model.B = BExt;
 model.C = CExt;
@@ -353,7 +352,7 @@ end
 figure;
 
 set(gcf,'name', ...
-    ['MPC, steps prediction Horizon: ' num2str(predHor)], ...
+    ['MPC, steps prediction Horizon: ' num2str(predHor) '; type of model: ' typeOfModel], ...
     'numbertitle', 'off');
 
 lW0 = 1.3;
@@ -384,7 +383,7 @@ for i = 1 : 2
    hold on;
    plot([time(2) time(end)], [limitYaw limitYaw] .* 180 / pi, 'r-.', 'LineWidth', lW0);
    plot(time(2:end-1), yawEstVector(i, :) .* 180 / pi, 'c-.', ...
-       'LineWidth', lW1, 'Color', [204 109 20] ./ 255);
+       'LineWidth', lW1, 'Color', [245 86 1] ./ 255);
    grid on;
    ylabel('[deg]');
    xlabel('Time [sec]');
