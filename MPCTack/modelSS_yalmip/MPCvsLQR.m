@@ -45,7 +45,7 @@ rudderBeforeTack = 0; %between -0.9 and 0.9
 meanTsSec = model.Dt;
 
 %prediction horizon, in number of simulation steps
-predHor = 80;
+predHor = 10;
 
 display(['Horizon MPC: ' num2str(predHor * meanTsSec) ' [sec].']);
 
@@ -54,15 +54,9 @@ tF = 5;
 %total simulation steps to reach tF
 N = round(tF / meanTsSec);
 
-            
-guessP1_1 = blkdiag(0.15 * eye(2), 0);
-
-
-
 %initial conditions
 tack = 'p2s'; %p2s s2p
 absAlphaNew = 45 * pi / 180;
-
 
 %gaussian noise on measurements
 varYawRate = 2 * pi / 180;
@@ -122,9 +116,10 @@ xHatRef = [ 0;
             0;
             0];
 %guess on the initial state of the KF
-guessX1Hat = [  2 * pi / 180;
-                -yawRef + (5 * pi / 180);
+guessX1Hat = [  0 * pi / 180;
+                -yawRef + (0 * pi / 180);
                 rudderBeforeTack];
+guessP1_1 = blkdiag(0.0 * eye(2), 0);
 
 %usefull index
 yawRateIndex = 1;
@@ -242,7 +237,7 @@ for k = 1 : N-1
    %compute MPC control input using meas 
    rudHatMPC(k) = mpcController{xEst_k_k};
    
-   %use distrubated state to update system dynamic
+   %update system dynamic
    xHatSimMPC(:, k+1) = AExt * xHatSimMPC(:, k) + BExt * rudHatMPC(k);
    
    %save kalman filter variables at the end of step k
@@ -352,7 +347,8 @@ end
 figure;
 
 set(gcf,'name', ...
-    ['MPC, steps prediction Horizon: ' num2str(predHor) '; type of model: ' typeOfModel], ...
+    ['MPC (yalmip), steps prediction Horizon: ' num2str(predHor) ...
+    '; type of model: ' typeOfModel], ...
     'numbertitle', 'off');
 
 lW0 = 1.3;
