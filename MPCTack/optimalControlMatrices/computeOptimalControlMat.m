@@ -6,6 +6,9 @@ close all;
 
 typeOfModel = 'little';%little (a,b) or capital (A,B)
 
+%change sampling time of the model used by the MPC
+factorSamplingTimeMPC = 10;
+
 % Weights 
 qYawRate = 0.00001;
 qYaw = 10;
@@ -20,24 +23,23 @@ rudderVelocity = 1.8 / 0.5; %command/sec: rudder can go full right to full lest 
 Q = blkdiag(qYawRate, qYaw, rU);
 R = sChattering;
 
-display('---------- Info ----------');
 
 if(strcmp(typeOfModel, 'little'))
     %load identified model with a and b
     load('linModelScalar');
     linModel = linModelScalar;
-    display('Model with a and b.');
+    nameModelUsed = 'a and b';
     %select wich  model you want to use
     nameModel = 'tack8';
 else
     %load identified model with A and B
     load('linModelFull');
     linModel = linModelFull;
-    display('Model with A and B.');
+    nameModelUsed = 'A and B';
     %select wich  model you want to use
     nameModel = 'tack6';
 end
-display('--------------------------');
+
 
 %take the linear model to use in simulation
 eval(['model = linModel.' nameModel ';']);
@@ -46,8 +48,9 @@ eval(['model = linModel.' nameModel ';']);
 % uHat = [rudder_{k} - rudder{k-1}];
 % we use the extended model to achieve the same cost function in the
 % LQR and in the MPC. Since the LQR can have a cost function of the form
-% x' * Q * x + u' * R * u, that tries to bring the system to the origin, we
-% start with a yaw angle = -yawRef and we bring the system to the origin.
+% x' * Q * x + u' * R * u, that tries to bring the system to the origin
+
+%LQR: use normal system sampling time
 AExt = [model.A,                      model.B;
         zeros(1, length(model.A)),    1];
     
@@ -56,7 +59,18 @@ BExt = [model.B;
     
 %compute gain matrix for the LQR and the solution of the discrete riccati
 %equation
-[K_LQR, M, ~] = dlqr(AExt, BExt, Q, R); 
+[K_LQR, ~, ~] = dlqr(AExt, BExt, Q, R); 
+
+%MPC: change model sampling time by a factor of factorSamplingTimeMPC
+modelMPC = tool_changeModelSampleTime(model, factorSamplingTimeMPC);
+
+AExt = [modelMPC.A,                      modelMPC.B;
+        zeros(1, length(modelMPC.A)),    1];
+    
+BExt = [modelMPC.B;
+        1];
+%discrete riccati solution
+M = dare(AExt, BExt, Q, R);
 
 %MPC forces Hesian matrix
 H = [sChattering; qYawRate; qYaw; rU];
@@ -66,13 +80,18 @@ H_final = blkdiag(0, M);
 
 
 %every simulation step lasts meanTsSec seconds.
-rudderVelSim = rudderVelocity * model.Dt;
+rudderVelSim = rudderVelocity * modelMPC.Dt;
 %MPC lower and upper bound
 lowerBound = [-rudderVelSim; -rudderMax];
 upperBound = [rudderVelSim; rudderMax];
 
 
-%print matrices
+%print matrices and info
+display('---------- Info ----------');
+display(['Model with estimated ' nameModelUsed '.']);
+display(['LQR model sampling time: ' num2str(model.Dt) ' [sec].']);
+display(['MPC model sampling time: ' num2str(modelMPC.Dt) ' [sec].']);
+display('--------------------------');
 printmat(K_LQR, 'LQR gain', '', 'ASO_LQR_K1 ASO_LQR_K2 ASO_LQR_K3');
 
 printmat(H', 'MPC H', '', 'ASO_MPC_H1 ASO_MPC_H2 ASO_MPC_H3 ASO_MPC_H4');
