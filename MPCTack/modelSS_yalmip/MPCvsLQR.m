@@ -9,6 +9,9 @@ yalmip('clear');
 
 typeOfModel = 'little';%little (a,b) or capital (A,B)
 
+%simulate using real state or estimated state by K.F. ?
+useRealState = 1;
+
 display('---------- Info ----------');
 
 if(strcmp(typeOfModel, 'little'))
@@ -32,9 +35,9 @@ end
 %choose if you want to increase the sample time of the model you selected
 factorSampleTime = 10;
 
-%choose every how many seconds a new optimal control by the MPC must be
-%computed
-timeComputeMPC = 0.1;%seconds
+% %choose every how many seconds a new optimal control by the MPC must be
+% %computed
+% timeComputeMPC = 0.1;%seconds
 
 %prediction horizon of the MPC
 predHor = 10;
@@ -69,7 +72,7 @@ rudderBeforeTack = 0; %between -0.9 and 0.9
 meanTsSec = model.Dt;
 
 %convert timeComputeMPC in simulation time
-timeComputeMPCSim = round(timeComputeMPC / meanTsSec);
+%timeComputeMPCSim = round(timeComputeMPC / meanTsSec);
 
 %take the sample time of the model used by MPC or LQR
 meanTsSecDown = modelDownSampled.Dt;
@@ -87,7 +90,7 @@ absAlphaNew = 45 * pi / 180;
 %gaussian noise on measurements
 varYawRate = 2 * pi / 180;
 varYaw = 10 * pi / 180;
-varRudder = 0.000001;
+varRudder = 1e-6;
 
           
 measNoise = [sqrt(varYawRate) * randn(1, N);
@@ -106,8 +109,10 @@ absDeltaYaw = 10 * pi / 180;
 %convert rudderVelocity from command/sec to command/simulationStep
 
 %rudder velocity based on simulation time of the model used by MPC
-rudderVelSim = rudderVelocity * meanTsSecDown;
+rudderVelMPC = rudderVelocity * meanTsSecDown;
 
+%rudder velocity in simulation time
+rudderVelSim = rudderVelocity * meanTsSec;
 
 % extended model xHat = [yawRate_k, yaw_k, rudder_{k-1}],
 % uHat = [rudder_{k} - rudder{k-1}];
@@ -149,8 +154,8 @@ xHatRef = [ 0;
             0;
             0];
 %guess on the initial state of the KF
-guessX1Hat = [  2 * pi / 180;
-                -yawRef + (5 * pi / 180);
+guessX1Hat = [  5 * pi / 180;
+                -yawRef + (15 * pi / 180);
                 rudderBeforeTack];
 guessP1_1 = blkdiag(0.2 * eye(2), 0);
 
@@ -193,14 +198,16 @@ for k = 1 : predHor
                   -rudderMax <= uHatMPC{k} + xHatMPC{k}(lastRudderIndex) <= rudderMax];
     
     %limit input velocity
-    constraints = [constraints, abs(uHatMPC{k}) <= rudderVelSim];
+    constraints = [constraints, abs(uHatMPC{k}) <= rudderVelMPC];
  
     %limit maximum yaw overshoot based on which haul you want to have at
     %the end
     if(strcmp(tack, 'p2s'))
-        constraints = [constraints, xHatMPC{k}(yawIndex)  >= yawRef - absDeltaYaw];
+        %constraints = [constraints, xHatMPC{k}(yawIndex)  >= yawRef - absDeltaYaw];
+        constraints = [constraints, xHatMPC{k}(yawIndex)  >= -absDeltaYaw];
     else
-        constraints = [constraints, xHatMPC{k}(yawIndex) <= yawRef + absDeltaYaw];
+        %constraints = [constraints, xHatMPC{k}(yawIndex) <= yawRef + absDeltaYaw];
+        constraints = [constraints, xHatMPC{k}(yawIndex) <= absDeltaYaw];
     end
 
  
@@ -279,9 +286,18 @@ for k = 1 : N-1
    end
    
    %compute MPC control every timeComputeMPCSim steps
-   if(k == 1 || mod(k, timeComputeMPCSim) == 0)
-       %compute new optimal control
-       rudHatMPC(indexRunMPC) = mpcController{xEst_k_k};
+   if(k == 1 || mod(k, factorSampleTime) == 0)
+       %compute new optimal control using meas
+       %rudHatMPC(indexRunMPC) = mpcController{xEst_k_k};
+       
+       if useRealState
+           %compute new optimal control using real state
+           rudHatMPC(indexRunMPC) = mpcController{xHatSimMPC(:, k)};
+       else
+           %compute new optimal control using meas
+           rudHatMPC(indexRunMPC) = mpcController{xEst_k_k};
+       end
+       
        %save simulation step when a new optimal control was comptuted
        timeRunMPC(1, indexRunMPC) = k;
        %update uHat
@@ -304,9 +320,9 @@ end
 
 
 % translate system response
-xHatSimMPC(yawIndex, :) = xHatSimMPC(yawIndex, :) + yawRef;
+%xHatSimMPC(yawIndex, :) = xHatSimMPC(yawIndex, :) + yawRef;
 yawMPC = xHatSimMPC(yawIndex, :);
-xHatEstMPC(yawIndex, :) = xHatEstMPC(yawIndex, :) + yawRef;
+%xHatEstMPC(yawIndex, :) = xHatEstMPC(yawIndex, :) + yawRef;
 
 %from uHatMPC compute rudder sequence for the normal system (not the
 %extended one)
@@ -341,6 +357,9 @@ xHatEstLQR(:, 1) = guessX1Hat;
 %rudder value before tacking
 u_k1 = rudderBeforeTack;
 
+%rudder to the real boat at the previous step
+rudReal_k1 = rudderBeforeTack;
+
 for k = 1 : N-1
    %we are starting now the step k, prediction phase
    [K_k, P_k_k] = kfPrediction(model, convarianceStr, P_k1_k1);
@@ -357,17 +376,36 @@ for k = 1 : N-1
         xHatEstLQR(:, k) = xEst_k_k;
    end
    
-   %compute LQR control input using meas 
-   rudHatLQR(k) = -K_LQR * xEst_k_k;
-   
-   %input saturation to the real system (not extended)
+   if useRealState
+       %compute LQR control input using real state
+       rudHatLQR(k) = -K_LQR * xHatSimLQR(:, k);
+   else
+       %compute LQR control input using meas
+       rudHatLQR(k) = -K_LQR * xEst_k_k;
+   end
+
+   %input to the real system (not extended)
    uRealSys = rudHatLQR(k) + xEst_k_k(lastRudderIndex);
    
+   %velocity constrain
+   if(abs(uRealSys - rudReal_k1) >= rudderVelSim)
+       %velocity constrain violated
+       if((uRealSys - rudReal_k1) >= 0)
+           uRealSys = rudReal_k1 + rudderVelSim;
+       else
+           uRealSys = rudReal_k1 - rudderVelSim;
+       end
+   end
+   
+   %saturation constrain
    if(uRealSys > rudderMax)
        uRealSys = rudderMax;
    elseif(uRealSys < -rudderMax)
       uRealSys = -rudderMax;
    end
+   %save uRealsys for next iteration
+   rudReal_k1 = uRealSys;
+   
    %rewrite uRealSys as input to the extended state
    rudHatLQR(k) = uRealSys - xEst_k_k(lastRudderIndex);
    
@@ -381,9 +419,9 @@ for k = 1 : N-1
 end
 
 % translate system response
-xHatSimLQR(2, :) = xHatSimLQR(2, :) + yawRef;
+%xHatSimLQR(2, :) = xHatSimLQR(2, :) + yawRef;
 yawLQR = xHatSimLQR(2, :);
-xHatEstLQR(2, :) = xHatEstLQR(2, :) + yawRef;
+%xHatEstLQR(2, :) = xHatEstLQR(2, :) + yawRef;
 
 %from uHatMPC compute rudder sequence for the normal system (not the
 %extended one)
@@ -400,9 +438,9 @@ timeRunMPC = timeRunMPC .* meanTsSec;
 
 %compute yaw overshoot limit
 if(strcmp(tack, 'p2s'))
-    limitYaw = yawRef - absDeltaYaw;
+    limitYaw = -absDeltaYaw;
 else
-    limitYaw = yawRef + absDeltaYaw;
+    limitYaw = absDeltaYaw;
 end
 
 figure;
@@ -414,9 +452,15 @@ set(gcf,'name', ...
 
 lW0 = 1.3;
 
-leg = {{'\psi real MPC', 'limit', '\psi by KF'}, ...
-       {'\psi real LQR', 'limit', '\psi by KF'}, ...
-       'rud MPC', 'rud LQR'};
+if useRealState
+    leg = {{'\psi real MPC', 'limit'}, ...
+           {'\psi real LQR', 'limit'}, ...
+           'rud MPC', 'rud LQR'};
+else
+    leg = {{'\psi real MPC', 'limit', '\psi by KF'}, ...
+           {'\psi real LQR', 'limit', '\psi by KF'}, ...
+           'rud MPC', 'rud LQR'};
+end
 
 yawReal = [yawMPC;
            yawLQR];
@@ -441,8 +485,11 @@ for i = 1 : 2
        'LineWidth', 1.9, 'Color', [88 25 225] ./ 255);
    hold on;
    plot([time(2) time(end)], [limitYaw limitYaw] .* 180 / pi, 'r-.', 'LineWidth', lW0);
-   plot(time(2:end-1), yawEstVector(i, :) .* 180 / pi, 'c-.', ...
-       'LineWidth', 1.9, 'Color', [245 86 1] ./ 255);
+   
+   if useRealState == 0
+       plot(time(2:end-1), yawEstVector(i, :) .* 180 / pi, 'c-.', ...
+           'LineWidth', 1.9, 'Color', [245 86 1] ./ 255);
+   end
    grid on;
    ylabel('[deg]');
    xlabel('Time [sec]');
@@ -450,10 +497,10 @@ for i = 1 : 2
    legend(leg{index});
    
    %add yawRef as tick in Y axis
-   tmp = get(gca, 'YTick');
-   tmp = [tmp yawRef * 180 / pi];
-   tmp = sort(tmp);
-   set(gca, 'YTick', tmp);
+%    tmp = get(gca, 'YTick');
+%    tmp = [tmp yawRef * 180 / pi];
+%    tmp = sort(tmp);
+%    set(gca, 'YTick', tmp);
    
    index = i + 2;
    

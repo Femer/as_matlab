@@ -4,7 +4,7 @@ clc;
 clear;
 close all;
 
-typeOfModel = 'little';%little (a,b) or capital (A,B)
+typeOfModel = 'capital';%little (a,b) or capital (A,B)
 
 %change sampling time of the model used by the MPC
 factorSamplingTimeMPC = 10;
@@ -89,8 +89,10 @@ upperBound = [rudderVelSim; rudderMax];
 %print matrices and info
 display('---------- Info ----------');
 display(['Model with estimated ' nameModelUsed '.']);
-display(['LQR model sampling time: ' num2str(model.Dt) ' [sec].']);
-display(['MPC model sampling time: ' num2str(modelMPC.Dt) ' [sec].']);
+display(['LQR model sampling time: ' num2str(model.Dt) ...
+        ' [sec] == ' num2str(round(model.Dt * 1e6)) ' [uSec].']);
+display(['MPC model sampling time: ' num2str(modelMPC.Dt) ...
+        ' [sec] == ' num2str(round(modelMPC.Dt * 1e6)) ' [uSec].']);
 display('--------------------------');
 printmat(K_LQR, 'LQR gain', '', 'ASO_LQR_K1 ASO_LQR_K2 ASO_LQR_K3');
 

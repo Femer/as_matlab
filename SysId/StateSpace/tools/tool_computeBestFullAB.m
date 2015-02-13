@@ -7,8 +7,14 @@ Y = dataId.dataYaw.OutputData;
 %take rudder commands
 U = dataId.dataYawRate.InputData;
 
+%backward compatibility
+if(isfield(dataId, 'bgud_time'))
+    time = dataId.bgud_time;
+else
+    time = dataId.time_sysId;
+end
 %compute average delta dt over the sampled measurements
-Dt = mean(diff(dataId.bgud_time)); %mean deltaT in uSec
+Dt = mean(diff(time)); %mean deltaT in uSec
 %convert Dt from uSec to sec
 Dt = Dt / 1e6;
 

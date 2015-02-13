@@ -74,13 +74,33 @@ for j = 1 : length(q0)
         tack.velV(j) = app(2); 
 end
 
-%compute alpha_yaw by interpolating
-yaw_interp = spline(tack.att_time, tack.yaw, tack.bgud_time);
-tack.yaw_interp = yaw_interp;
-tack.alpha_yaw = tack.twd_avg - yaw_interp;
+%compute alpha_yaw by interpolating the smallest vector
+if(length(tack.att_time) < length(tack.bgud_time))
+    yaw_interp = spline(tack.att_time, tack.yaw, tack.bgud_time);
+    twd_avg = tack.twd_avg;
+    alpha_yaw_time = tack.bgud_time;
+    %for sysId corss validation
+    yawRate_sysId = spline(tack.att_time, tack.yawRate, tack.bgud_time);
+    yaw_sysId = spline(tack.att_time, tack.yaw, tack.bgud_time);
+    rudder_sysId = tack.rudder;
+    time_sysId = tack.bgud_time;
+else
+    yaw_interp = tack.yaw;
+    twd_avg = spline(tack.bgud_time, tack.twd_avg, tack.att_time);
+    alpha_yaw_time = tack.att_time;
+    %for sysId corss validation
+    yawRate_sysId = tack.yawRate;
+    yaw_sysId = tack.yaw;
+    rudder_sysId = spline(tack.bgud_time, tack.rudder, tack.att_time);
+    time_sysId = tack.att_time;
+end
+tack.alpha_yaw = twd_avg - yaw_interp;
+tack.alpha_yaw_time = alpha_yaw_time;
 
-yawRate_interp = spline(tack.att_time, tack.yawRate, tack.bgud_time);
-tack.yawRate_interp = yawRate_interp;
+tack.yawRate_sysId = yawRate_sysId;
+tack.yaw_sysId = yaw_sysId;
+tack.rudder_sysId = rudder_sysId;
+tack.time_sysId = time_sysId;
 
 end
 
