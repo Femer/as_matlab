@@ -16,7 +16,7 @@ xRef = [ 0;
 %weights
 qW = 0.5; % 0.01
 qY = 10; % 10
-r = 0.01;  % 5
+r = 0.1;  % 5
 
 Q = blkdiag(qW, qY);
 
@@ -63,6 +63,7 @@ display(['[X1, X2] star :' num2str(rad2deg(param1.xVector)) '   [rad].']);
 display(['Y1star :' num2str(param1.yValue) ' [cmd].']);
 
 figure;
+lW = 1.9;
 %Remeber: alpha_dumas = - yaw_sensor
 
 time_state_h0 = (0 : length(h0.y{indexMinJ0}) - 1) .* h0.Dt;
@@ -72,11 +73,11 @@ time_state_h1 = (0 : length(h1.y{indexMinJ1}) - 1) .* h1.Dt;
 time_rud_h1 = (0 : length(h1.rud{indexMinJ1}) - 1) .* h1.Dt;
 
 subplot(221);
-plot(time_state_h0, -rad2deg(h0.y{indexMinJ0}));
+plot(time_state_h0, -rad2deg(h0.y{indexMinJ0}), 'LineWidth', lW);
 hold on;
 plot([time_state_h0(1) time_state_h0(end)], ...
     -rad2deg([xRef(2) xRef(2)]), ...
-    'r--');
+    'r--', 'LineWidth', lW);
 
 legend('\alpha H0', '\alpha star');
 xlabel('Time [sec]');
@@ -84,11 +85,11 @@ ylabel('deg');
 grid on;
 
 subplot(222);
-plot(time_state_h1, -rad2deg(h1.y{indexMinJ1}));
+plot(time_state_h1, -rad2deg(h1.y{indexMinJ1}), 'LineWidth', lW);
 hold on;
 plot([time_state_h0(1) time_state_h0(end)], ...
     -rad2deg([xRef(2) xRef(2)]), ...
-    'r--');
+    'r--', 'LineWidth', lW);
 
 
 legend('\alpha H1', '\alpha star');
@@ -97,14 +98,14 @@ ylabel('deg');
 grid on;
 
 subplot(223);
-plot(time_rud_h0,h0.rud{indexMinJ0});
+plot(time_rud_h0,h0.rud{indexMinJ0}, 'LineWidth', lW);
 legend('rud H0');
 xlabel('Time [sec]');
 ylabel('cmd');
 grid on;
 
 subplot(224);
-plot(time_rud_h1,h1.rud{indexMinJ1});
+plot(time_rud_h1,h1.rud{indexMinJ1}, 'LineWidth', lW);
 legend('rud H1');
 xlabel('Time [sec]');
 ylabel('cmd');

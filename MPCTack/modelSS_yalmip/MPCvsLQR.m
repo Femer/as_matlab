@@ -1,4 +1,3 @@
-%TODO resolve problem about velocity constraint!!!
 
 clc;
 clear;
@@ -56,9 +55,9 @@ display(['Model for the MPC, sample time changed by a factor of ' num2str(factor
     ': from ' num2str(oldDt) ' to ' num2str(modelDownSampled.Dt) ' [sec].']);
 
 % Weights 
-qYawRate = 0.00001;
+qYawRate = 0.01;
 qYaw = 10;
-rU = 0.001;
+rU = 0.1;
 sChattering = 5;
 
 %matrices
