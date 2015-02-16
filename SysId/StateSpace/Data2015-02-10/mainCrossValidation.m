@@ -2,26 +2,15 @@ clc;
 clear;
 %close all;
 
-%load step data
-%extractStepsFromHelmsman;
 
-%load full tack data
-%extractTacksFromHelmsman;
-
-%load controlled course
-%extractControlledCourse;
-
-%load cross validation data from test on 2015-02-10
+%load validation data from test on 10-02-2015
 load('dataCrossValidation2015-02-10');
 
 %tool
 addpath('../tools/');
 
-%Update the model state with the real state every secResampleState sec
-secResampleState = 1;
-
 %estimated model with a and B or with A and B
-typeOfModel = 'little'; %little or capital
+typeOfModel = 'capital'; %little or capital
 
 %choose if you want to increase the sample time of the model you selected
 factorSampleTime = 1;
@@ -33,14 +22,14 @@ if(strcmp(typeOfModel, 'little'))
     display('Model estimated with a and b');
     %select the sequence from which you want to load the identified model
     nameSeqId = 'tack8';
-    dateSysId = '21-01-2015';
+    dateSysId = '10-02-2015';
 else
     load('linModelFull');
     linModels = linModelFull;
     display('Model estimated with A and B');
     %select the sequence from which you want to load the identified model
-    nameSeqId = 'tack6';
-    dateSysId = '21-01-2015';
+    nameSeqId = 'tack1';
+    dateSysId = '10-02-2015';
 end
 
 
@@ -60,16 +49,11 @@ if(factorSampleTime > 1)
         ': from ' num2str(oldDt) ' to ' num2str(model.Dt) ' [sec].']);
 end
 
-timeSampleRealSys = round(secResampleState / model.Dt);
-display(['Model state updated with real state every ' ...
-        num2str(secResampleState) ' sec.']);
-
 %use every sequence in steptacks for validation
 seqNames = fieldnames(stepTacks);
 seqNumb = length(seqNames);
 
-tool_crossValidation(stepTacks, model, nameSeqId, choosenOutput, ...
-                     factorSampleTime, dateSysId, timeSampleRealSys);
+tool_crossValidation(stepTacks, model, nameSeqId, choosenOutput, factorSampleTime, dateSysId);
 
 
 

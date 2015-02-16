@@ -9,7 +9,7 @@ yalmip('clear');
 typeOfModel = 'little';%little (a,b) or capital (A,B)
 
 %simulate using real state or estimated state by K.F. ?
-useRealState = 1;
+useRealState = 0;
 
 display('---------- Info ----------');
 
