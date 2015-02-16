@@ -1,0 +1,4 @@
+fileID = fopen('loggedDataFromQGC.');
+C = textscan(fileID,'%s %s %f32 %d8 %u %f %f %s %f');
+fclose(fileID);
+celldisp(C)

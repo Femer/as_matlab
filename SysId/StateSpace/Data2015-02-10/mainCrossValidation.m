@@ -6,6 +6,9 @@ clear;
 %load validation data from test on 10-02-2015
 load('dataCrossValidation2015-02-10');
 
+%Update the model state with the real state every secResampleState sec
+secResampleState = 1;
+
 %tool
 addpath('../tools/');
 
@@ -49,11 +52,14 @@ if(factorSampleTime > 1)
         ': from ' num2str(oldDt) ' to ' num2str(model.Dt) ' [sec].']);
 end
 
+timeSampleRealSys = round(secResampleState / model.Dt);
+
 %use every sequence in steptacks for validation
 seqNames = fieldnames(stepTacks);
 seqNumb = length(seqNames);
 
-tool_crossValidation(stepTacks, model, nameSeqId, choosenOutput, factorSampleTime, dateSysId);
+tool_crossValidation(stepTacks, model, nameSeqId, choosenOutput, ...
+    factorSampleTime, dateSysId, timeSampleRealSys);
 
 
 
