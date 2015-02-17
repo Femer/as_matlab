@@ -7,7 +7,7 @@ clear;
 load('dataCrossValidation2015-02-10');
 
 %Update the model state with the real state every secResampleState sec
-secResampleState = 1;
+secResampleState = 5;
 
 %tool
 addpath('../tools/');

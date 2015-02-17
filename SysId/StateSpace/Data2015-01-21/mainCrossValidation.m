@@ -21,7 +21,7 @@ addpath('../tools/');
 secResampleState = 1;
 
 %estimated model with a and B or with A and B
-typeOfModel = 'little'; %little or capital
+typeOfModel = 'capital'; %little or capital
 
 %choose if you want to increase the sample time of the model you selected
 factorSampleTime = 1;
@@ -47,7 +47,7 @@ end
 %%
 
 %do you want to plot yawRate or yaw ?
-choosenOutput = 'yaw';
+choosenOutput = 'yawRate';
 
 display(['Model estimated with data from ' nameSeqId '; estimated using ' typeOfModel ' model.']);
 eval(['model = linModels.' nameSeqId ';']);

@@ -14,9 +14,9 @@ xRef = [ 0;
          deg2rad(-45)];
 
 %weights
-qW = 0.5; % 0.01
-qY = 10; % 10
-r = 0.1;  % 5
+qW = 0.01; % 0.01 short peak    | 0.5 very short peak
+qY = 10; % 10                   |  10
+r = 0.5;  % 5                   |  0.1
 
 Q = blkdiag(qW, qY);
 

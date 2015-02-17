@@ -55,9 +55,9 @@ display(['Model for the MPC, sample time changed by a factor of ' num2str(factor
     ': from ' num2str(oldDt) ' to ' num2str(modelDownSampled.Dt) ' [sec].']);
 
 % Weights 
-qYawRate = 0.01;
+qYawRate = 1;
 qYaw = 10;
-rU = 0.1;
+rU = 0.001;
 sChattering = 5;
 
 %matrices
@@ -87,9 +87,9 @@ tack = 'p2s'; %p2s s2p
 absAlphaNew = 45 * pi / 180;
 
 %gaussian noise on measurements
-varYawRate = 2 * pi / 180;
-varYaw = 10 * pi / 180;
-varRudder = 1e-6;
+varYawRate = 20 * pi / 180;
+varYaw = 5 * pi / 180;
+varRudder = 0.2;
 
           
 measNoise = [sqrt(varYawRate) * randn(1, N);
@@ -156,7 +156,7 @@ xHatRef = [ 0;
 guessX1Hat = [  5 * pi / 180;
                 -yawRef + (15 * pi / 180);
                 rudderBeforeTack];
-guessP1_1 = blkdiag(0.2 * eye(2), 0);
+guessP1_1 = blkdiag(1 * eye(2), 0);
 
 %usefull index
 yawRateIndex = 1;
@@ -285,7 +285,8 @@ for k = 1 : N-1
    end
    
    %compute MPC control every timeComputeMPCSim steps
-   if(k == 1 || mod(k, factorSampleTime) == 0)
+   %if(k == 1 || mod(k, factorSampleTime) == 0)
+   if(mod(k, factorSampleTime) == 0)
        %compute new optimal control using meas
        %rudHatMPC(indexRunMPC) = mpcController{xEst_k_k};
        
