@@ -1,4 +1,4 @@
-function [numericModelFit] = tool_printFitPercent(listValidationData, model, nameModel)
+function [numericModelFit] = tool_printFitPercent(listValidationData, model, nameModel, timeSampleRealSys)
 
 
 
@@ -21,7 +21,7 @@ for indexValData = 1 : numberValidationData
       
     modelsFit{1, indexValData+1} = nameValidationData{indexValData};
     %simulate model response
-    [modelYaw, ~] = tool_computeModelResponse(model, valData);
+    [modelYaw, ~] = tool_computeModelResponse(model, valData, timeSampleRealSys);
        
     %limit modelsOutput to be in [-pi, pi]
     indexOverPi = modelYaw > pi;

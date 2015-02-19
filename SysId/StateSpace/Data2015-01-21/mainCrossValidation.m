@@ -12,7 +12,11 @@ clear;
 %extractControlledCourse;
 
 %load cross validation data from test on 2015-02-10
-load('dataCrossValidation2015-02-10');
+%load('dataCrossValidation2015-02-10');
+
+%load cross validation data from test on 2015-02-18
+load('dataCrossValidation2015-02-18');
+
 
 %tool
 addpath('../tools/');
@@ -47,7 +51,7 @@ end
 %%
 
 %do you want to plot yawRate or yaw ?
-choosenOutput = 'yawRate';
+choosenOutput = 'yaw';
 
 display(['Model estimated with data from ' nameSeqId '; estimated using ' typeOfModel ' model.']);
 eval(['model = linModels.' nameSeqId ';']);

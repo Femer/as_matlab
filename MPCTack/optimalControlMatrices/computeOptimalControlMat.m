@@ -13,13 +13,13 @@ factorSamplingTimeMPC = 10;
 
 % Weights 
 qYawRate = 1;
-qYaw = 10;
-rU = 0.001;
-sChattering = 5;
+qYaw = 1;
+rU = 1;
+sChattering = 20;
 
 %constraints
-rudderMax = 0.9;%0.9;
-rudderVelocity = 1.8 / 0.5; %command/sec: rudder can go full right to full lest in 0.5 sec
+rudderMax = 0.5;%0.9;
+rudderVelocity = 0.9/0.5;%1.8 / 0.5; %command/sec: rudder can go full right to full lest in 0.5 sec
 
 %matrices
 Q = blkdiag(qYawRate, qYaw, rU);
