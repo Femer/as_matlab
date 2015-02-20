@@ -3,7 +3,7 @@ function [xHatSimMPC, xHatEstMPC, rudMPC, timeRunMPC] = simMPC(mpcController, ..
                                                     xHatSimMPC1, guessP1_1, guessX1Hat,...
                                                     rudderBeforeTack, factorSampleTime, ...
                                                     N, measNoise, useRealState, ...
-                                                    convarianceStr, rudderMax)
+                                                    convarianceStr, rudderMax, rudderVel_cmd_sec)
 % compute the 'real' system evolution using the normally sampled model called realModel.
 % run the MPC every 'factorSampleTime' 
 display('Computing MPC response');
@@ -62,13 +62,21 @@ for k = 1 : N-1
    if(mod(k, factorSampleTime) == 0)
        
        if useRealState
-           %compute new optimal control using real state
-           rudHatMPC(indexRunMPC) = mpcController{xHatSimMPC(:, k)};
+           %compute LQR control input using real state
+           feedbackState = xHatSimMPC(:, k);
        else
-           %compute new optimal control using meas
-           rudHatMPC(indexRunMPC) = mpcController{xEst_k_k};
+           %compute LQR control input using meas
+           feedbackState = xEst_k_k;
        end
-              
+       rudHatMPC(indexRunMPC) = mpcController{feedbackState}; 
+       
+       %constrin max value and velocity
+       rudHatMPC(indexRunMPC) = rudderSaturation(rudHatMPC(indexRunMPC), ...
+                                                    xHatSimMPC(lastRudderIndex, k),...
+                                                    rudderMax, ...
+                                                    rudderVel_cmd_sec, ...
+                                                    realModel.Dt * factorSampleTime);
+       
        %save simulation step when a new optimal control was comptuted
        timeRunMPC(1, indexRunMPC) = k;
        %update uHat

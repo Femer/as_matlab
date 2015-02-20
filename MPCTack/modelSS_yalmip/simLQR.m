@@ -36,9 +36,6 @@ xHatEstLQR(:, 1) = guessX1Hat;
 %rudder value before tacking
 u_k1 = rudderBeforeTack;
 
-%rudder to the real boat at the previous step
-rudReal_k1 = rudderBeforeTack;
-
 for k = 1 : N-1
    %we are starting now the step k, prediction phase
    [K_k, P_k_k] = kfPrediction(uncertModel, convarianceStr, P_k1_k1);
@@ -58,40 +55,17 @@ for k = 1 : N-1
    
    if useRealState
        %compute LQR control input using real state
-       rudHatLQR(k) = -K_LQR * xHatSimLQR(:, k);
+       feedbackState = xHatSimLQR(:, k);
    else
        %compute LQR control input using meas
-       rudHatLQR(k) = -K_LQR * xEst_k_k;
+       feedbackState = xEst_k_k;
    end
+   rudHatLQR(k) = -K_LQR * feedbackState;
 
-   %input to the real system (not the extended model)
-   uRealSys = sum([rudderBeforeTack, rudHatLQR(1:k)]);
-   %uRealSys = rudHatLQR(k) + xEst_k_k(lastRudderIndex);
-   
-   %velocity constrain
-   if(abs(uRealSys - rudReal_k1) >= rudderVelSim)
-       %velocity constrain violated
-       if((uRealSys - rudReal_k1) >= 0)
-           uRealSys = rudReal_k1 + rudderVelSim;
-       else
-           uRealSys = rudReal_k1 - rudderVelSim;
-       end
-   end
-   
-   %saturation constrain
-   if(uRealSys > rudderMax)
-       uRealSys = rudderMax;
-   elseif(uRealSys < -rudderMax)
-      uRealSys = -rudderMax;
-   end
+   %constrin max value and velocity
+   rudHatLQR(k) = rudderSaturation(rudHatLQR(k), xHatSimLQR(lastRudderIndex, k),...
+                                   rudderMax, rudderVel_cmd_sec, realModel.Dt);
       
-   %rewrite uRealSys as input to the extended state
-   %rudHatLQR(k) = uRealSys - xEst_k_k(lastRudderIndex);
-   rudHatLQR(k) = uRealSys - rudReal_k1;
-   
-   %save uRealsys for next iteration
-   rudReal_k1 = uRealSys;
-   
    %update system dynamic
    xHatSimLQR(:, k+1) = realModel.A * xHatSimLQR(:, k) + realModel.B * rudHatLQR(k);
    
@@ -103,7 +77,10 @@ end
 
 %from uHatMPC compute rudder sequence for the normal system (not the
 %extended one)
-rudLQR = cumsum([rudderBeforeTack, rudHatLQR]);
+rudLQR = xHatSimLQR(lastRudderIndex, 1 : N-1);
+
+   
+%rudLQR = cumsum([rudderBeforeTack, rudHatLQR]);
 
 end
 
