@@ -88,15 +88,10 @@ if ~isequal(file_name, 0) %if valid files has been selected
     
     
     full_path = fullfile(path_name, file_name);
-    
-    fileID = fopen(full_path);
-    
-    header = textscan(fileID, '%s %s %s %s', 1);
-    celldisp(header)
-    
-    rows = textscan(fileID, '%f %f %f %f');
-    celldisp(rows)
-    
+    %read file
+    fileID = fopen(full_path); 
+    header = textscan(fileID, '%s %s %s %s', 1);  
+    rows = textscan(fileID, '%f %f %f %f');   
     fclose(fileID);
     
     %make sure in the txt file loaded there are timeStamp, yawRate, yaw and
@@ -108,6 +103,7 @@ if ~isequal(file_name, 0) %if valid files has been selected
     yawRateIndex = [];
     yawIndex = [];
     rudderIndex = [];
+    
     if(length(header) ~= 4)
         errorInHeader = 1;
     else
@@ -115,7 +111,8 @@ if ~isequal(file_name, 0) %if valid files has been selected
         neededField = {'TIME', 'yawspeed$', 'yaw$', 'Rud$'};
         for i = 1 : length(header)
            for j = 1 : length(neededField)
-               if(~isempty(regexp(header{i}, neededField{j})))
+               resRegExp = regexp(header{i}, neededField{j});
+               if(~isempty(resRegExp{1}))
                    %found a needed field in header{i}
                    if(j == 1)
                        timeIndex = j;
@@ -123,12 +120,17 @@ if ~isequal(file_name, 0) %if valid files has been selected
                        yawRateIndex = j;
                    elseif(j == 3)
                        yawIndex = j;
-                   else
+                   elseif(j == 4)
                        rudderIndex = j;
                    end
                end
            end
         end
+        %debug
+        timeIndex
+        yawRateIndex
+        yawIndex
+        rudderIndex
         %check if every needed field was found
         if(isempty(timeIndex) || ...
            isempty(yawRateIndex) || ...
@@ -141,7 +143,7 @@ if ~isequal(file_name, 0) %if valid files has been selected
 
     %safety check and alert box
     if(errorInHeader == 1)
-        msgbox('Log yawspeed, yaw and rudder in QGC', 'Error','error');
+        msgbox('Please log yawspeed, yaw and rudder in QGC', 'Error','error');
     else
         %no errors, save data in handles
         log.time = rows{timeIndex};
