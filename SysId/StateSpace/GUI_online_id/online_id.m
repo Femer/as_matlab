@@ -22,7 +22,7 @@ function varargout = online_id(varargin)
 
 % Edit the above text to modify the response to help online_id
 
-% Last Modified by GUIDE v2.5 16-Feb-2015 18:40:06
+% Last Modified by GUIDE v2.5 21-Feb-2015 15:25:00
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -78,11 +78,88 @@ function pushbutton1_Callback(hObject, eventdata, handles)
 
 
 
-% --- Executes on button press in txt_b.
-function txt_b_Callback(hObject, eventdata, handles)
-% hObject    handle to txt_b (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+% --- Executes on button press in b_load_logs.
+function b_load_logs_Callback(hObject, eventdata, handles)
+[file_name, path_name] = uigetfile('*.txt');
+
+%load('datiProva');
+
+if ~isequal(file_name, 0) %if valid files has been selected
+    
+    
+    full_path = fullfile(path_name, file_name);
+    
+    fileID = fopen(full_path);
+    
+    header = textscan(fileID, '%s %s %s %s', 1);
+    celldisp(header)
+    
+    rows = textscan(fileID, '%f %f %f %f');
+    celldisp(rows)
+    
+    fclose(fileID);
+    
+    %make sure in the txt file loaded there are timeStamp, yawRate, yaw and
+    %rudder command.
+    errorInHeader = 0; 
+    
+    %index of each needed field in the header struct
+    timeIndex = [];
+    yawRateIndex = [];
+    yawIndex = [];
+    rudderIndex = [];
+    if(length(header) ~= 4)
+        errorInHeader = 1;
+    else
+        %use reg exp
+        neededField = {'TIME', 'yawspeed$', 'yaw$', 'Rud$'};
+        for i = 1 : length(header)
+           for j = 1 : length(neededField)
+               if(~isempty(regexp(header{i}, neededField{j})))
+                   %found a needed field in header{i}
+                   if(j == 1)
+                       timeIndex = j;
+                   elseif(j == 2)
+                       yawRateIndex = j;
+                   elseif(j == 3)
+                       yawIndex = j;
+                   else
+                       rudderIndex = j;
+                   end
+               end
+           end
+        end
+        %check if every needed field was found
+        if(isempty(timeIndex) || ...
+           isempty(yawRateIndex) || ...
+           isempty(yawIndex) || ...
+           isempty(rudderIndex))
+            
+                errorInHeader = 1;
+        end
+    end
+
+    %safety check and alert box
+    if(errorInHeader == 1)
+        msgbox('Log yawspeed, yaw and rudder in QGC', 'Error','error');
+    else
+        %no errors, save data in handles
+        log.time = rows{timeIndex};
+        log.yawSpeed = rows{yawRateIndex};
+        log.yaw = rows{yawIndex};
+        log.rudder = rows{rudderIndex};
+        %call the log as the name of the loaded file
+        pointIndex = regexp(file_name, '\.');
+        logName = file_name(1 : pointIndex - 1);
+        eval(['handles.logs.' logName ' = log;']);
+        guidata(hObject, handles);
+        
+        %debug
+        assignin('base', 'h', handles);
+        assignin('base', 'file_name', file_name);
+    end
+    
+end
 
 
 % --- Executes on selection change in popupmenu1.

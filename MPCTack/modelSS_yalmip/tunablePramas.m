@@ -11,7 +11,7 @@ useRealState = 0;
 qYawRate = 1;
 qYaw = 3;
 rU = 1;%0.5
-sChattering = 35;
+sChattering = 20;
 
 %constraints
 rudderMax = 0.75;
