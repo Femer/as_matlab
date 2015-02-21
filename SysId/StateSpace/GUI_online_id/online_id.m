@@ -22,7 +22,7 @@ function varargout = online_id(varargin)
 
 % Edit the above text to modify the response to help online_id
 
-% Last Modified by GUIDE v2.5 21-Feb-2015 16:15:07
+% Last Modified by GUIDE v2.5 21-Feb-2015 17:08:36
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -164,12 +164,12 @@ end
 function p_logList_Callback(hObject, eventdata, handles)
 
 contents = cellstr(get(hObject,'String')); %returns p_logList contents as cell array
-selectedItem = contents{get(hObject,'Value')}; %returns selected item from p_logList
+selectedLog = contents{get(hObject,'Value')}; %returns selected item from p_logList
 
-if(strcmp(selectedItem, 'log list') ~= 1)
+if(strcmp(selectedLog, 'log list') ~= 1)
    %plot selected log
    
-   eval(['logStr = handles.logs.' selectedItem ';']);
+   eval(['logStr = handles.logs.' selectedLog ';']);
    tool_plotLog(handles, logStr);
 end
 
@@ -187,11 +187,36 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-% --- Executes on button press in pushbutton5.
-function pushbutton5_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton5 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+% --- Executes on button press in b_identify.
+function b_identify_Callback(hObject, eventdata, handles)
+%see which model has been selected
+selectedModel = get(handles.p_typeModel,'Value'); 
+
+%take the log selected in p_logList, it must be ~= first string
+contents = cellstr(get(handles.p_logList,'String')); %returns p_logList contents as cell array
+selectedLog = contents{get(handles.p_logList,'Value')}; %returns selected item from p_logList
+
+if(strcmp(selectedLog, 'log list') ~= 1)
+    %call ginput to allow the user selecting starting and ending of Id data
+    [timeSelected, ~] = ginput(2);
+    
+    %identify model, if possibile
+    eval(['logStr = handles.logs.' selectedLog ';']);    
+    [retVal, model] = tool_idModel(selectedModel, timeSelected, logStr);
+    
+    %add model to the list of identified model
+    modelType = {'_black', '_grey'};
+    eval(['handles.idModels.' selectedLog modelType{selectedModel} ' = model;']);
+    guidata(hObject, handles);
+    %update idModel list
+    tool_updateModelList(handles);
+    %debug
+    assignin('base', 'h', handles);
+else
+    %error, no valid log selected
+    msgbox('Please select a valid log', 'Error','error');
+end
+
 
 
 % --- Executes on button press in pushbutton6.
@@ -218,6 +243,59 @@ function p_typeModel_CreateFcn(hObject, eventdata, handles)
 % handles    empty - handles not created until after all CreateFcns called
 
 % Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on selection change in p_idModels.
+function p_idModels_Callback(hObject, eventdata, handles)
+% hObject    handle to p_idModels (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns p_idModels contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from p_idModels
+
+
+% --- Executes during object creation, after setting all properties.
+function p_idModels_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to p_idModels (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in b_validate.
+function b_validate_Callback(hObject, eventdata, handles)
+% hObject    handle to b_validate (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+
+function e_resampleFactor_Callback(hObject, eventdata, handles)
+% hObject    handle to e_resampleFactor (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of e_resampleFactor as text
+%        str2double(get(hObject,'String')) returns contents of e_resampleFactor as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function e_resampleFactor_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to e_resampleFactor (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');

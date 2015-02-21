@@ -15,8 +15,8 @@ else
 end
 %compute average delta dt over the sampled measurements
 Dt = mean(diff(time)); %mean deltaT in uSec
-%convert Dt from uSec to sec
-Dt = Dt / 1e6;
+%convert Dt from milliSec to sec
+Dt = Dt / 1e3;
 
 %number of measurements
 N = length(W);

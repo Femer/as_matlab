@@ -22,7 +22,7 @@ function varargout = online_id(varargin)
 
 % Edit the above text to modify the response to help online_id
 
-% Last Modified by GUIDE v2.5 21-Feb-2015 16:15:07
+% Last Modified by GUIDE v2.5 21-Feb-2015 17:08:36
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -80,16 +80,17 @@ function pushbutton1_Callback(hObject, eventdata, handles)
 
 % --- Executes on button press in b_load_logs.
 function b_load_logs_Callback(hObject, eventdata, handles)
-[file_name, path_name] = uigetfile('*.txt');
+%[file_name, path_name] = uigetfile('*.txt');
 
-%load('datiProva');
 
-if ~isequal(file_name, 0) %if valid files has been selected
+%if ~isequal(file_name, 0) %if valid files has been selected
+if 1
+file_name = 'test.txt';    
     
-    
-    full_path = fullfile(path_name, file_name);
-    %read file
-    fileID = fopen(full_path); 
+%     full_path = fullfile(path_name, file_name);
+%     %read file
+%     fileID = fopen(full_path); 
+    fileID = fopen('test.txt'); 
     header = textscan(fileID, '%s %s %s %s', 1);  
     rows = textscan(fileID, '%f %f %f %f');   
     fclose(fileID);
@@ -142,7 +143,7 @@ if ~isequal(file_name, 0) %if valid files has been selected
     else
         %no errors, save data in handles
         log.time = rows{timeIndex};
-        log.yawSpeed = rows{yawRateIndex};
+        log.yawRate = rows{yawRateIndex};
         log.yaw = rows{yawIndex};
         log.rudder = rows{rudderIndex};
         %call the log as the name of the loaded file
@@ -163,15 +164,13 @@ end
 function p_logList_Callback(hObject, eventdata, handles)
 
 contents = cellstr(get(hObject,'String')); %returns p_logList contents as cell array
-selectedItem = contents{get(hObject,'Value')}; %returns selected item from p_logList
+selectedLog = contents{get(hObject,'Value')}; %returns selected item from p_logList
 
-if(strcmp(selectedItem, 'log list') )
-   %plot log selected
-   index = selectedItem - 1; 
-   logNames = fieldnames(handles.logs);
+if(strcmp(selectedLog, 'log list') ~= 1)
+   %plot selected log
    
-   eval(['log = handles.logs.' logNames{index} ';']);
-   tool_plotLog(handles, log);
+   eval(['logStr = handles.logs.' selectedLog ';']);
+   tool_plotLog(handles, logStr);
 end
 
 
@@ -188,11 +187,26 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-% --- Executes on button press in pushbutton5.
-function pushbutton5_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton5 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+% --- Executes on button press in b_identify.
+function b_identify_Callback(hObject, eventdata, handles)
+%see which model has been selected
+selectedModel = (handles.p_typeModel,'Value'); 
+
+%take the log selected in p_logList, it must be ~= first string
+contents = cellstr(get(handles.p_logList,'String')); %returns p_logList contents as cell array
+selectedLog = contents{get(handles.p_logList,'Value')}; %returns selected item from p_logList
+
+if(strcmp(selectedLog, 'log list') ~= 1)
+    %call ginput to allow the user selecting starting and ending of Id data
+    [time, ~] = ginput(2);
+    
+    %identify model, if possibile
+    retVal =
+else
+    %error, no valid log selected
+    
+end
+
 
 
 % --- Executes on button press in pushbutton6.
@@ -219,6 +233,59 @@ function p_typeModel_CreateFcn(hObject, eventdata, handles)
 % handles    empty - handles not created until after all CreateFcns called
 
 % Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on selection change in p_idModels.
+function p_idModels_Callback(hObject, eventdata, handles)
+% hObject    handle to p_idModels (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns p_idModels contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from p_idModels
+
+
+% --- Executes during object creation, after setting all properties.
+function p_idModels_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to p_idModels (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in b_validate.
+function b_validate_Callback(hObject, eventdata, handles)
+% hObject    handle to b_validate (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+
+function e_resampleFactor_Callback(hObject, eventdata, handles)
+% hObject    handle to e_resampleFactor (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of e_resampleFactor as text
+%        str2double(get(hObject,'String')) returns contents of e_resampleFactor as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function e_resampleFactor_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to e_resampleFactor (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
