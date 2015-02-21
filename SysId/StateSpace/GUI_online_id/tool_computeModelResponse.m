@@ -19,7 +19,7 @@ x(2, 1) = yawVal(1);
 %compute model evolution
 for k = 1 : numbSamples - 1
     %read the ral state very timeSampleRealSys steps
-    if(mod(k, timeSampleRealSys) == 0)
+    if(mod(k, timeSampleRealSys) == 0 && timeSampleRealSys ~= -1)
         x(:, k) = [yawRateVal(k); yawVal(k)];
     end
     x(:, k+1) = A * x(:, k) + B * rudderVal(k);

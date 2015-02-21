@@ -279,19 +279,42 @@ end
 
 % --- Executes on button press in b_validate.
 function b_validate_Callback(hObject, eventdata, handles)
-% hObject    handle to b_validate (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+%take the selected log and use it as validation data
+contents = cellstr(get(handles.p_logList,'String')); %returns p_logList contents as cell array
+selectedLog = contents{get(handles.p_logList,'Value')}; %returns selected item from p_logList
+%see which model has been selected
+contents = cellstr(get(handles.p_idModels,'String')); 
+nameModel = contents{get(handles.p_idModels,'Value')};
+
+%take resaple factor
+resampleFactor = str2double(get(handles.e_resampleFactor, 'String'));
+
+%make sure selectedLog ~= log list AND nameModel ~= identified model
+if(strcmp(selectedLog, 'log list') ~= 1)
+    if(strcmp(nameModel, 'identified model') ~= 1)
+        
+        eval(['validationLog = handles.logs.' selectedLog ';']);   
+        eval(['modelSelected = handles.idModels.' nameModel ';']);
+        tool_validateModel(handles, modelSelected, validationLog, resampleFactor);
+    else
+        msgbox('Please select an identified model', 'Error','error');
+    end
+else
+    msgbox('Please select a log to use as validation data', 'Error','error');
+end
+
 
 
 
 function e_resampleFactor_Callback(hObject, eventdata, handles)
-% hObject    handle to e_resampleFactor (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of e_resampleFactor as text
-%        str2double(get(hObject,'String')) returns contents of e_resampleFactor as a double
+sampleFactor = str2double(get(hObject, 'String'));
+
+%make sure sampleFactor is a number
+if(isnan(sampleFactor))
+    msgbox('Please insert a number', 'Error','error');
+    set(hObject, 'String', '-1');
+end
 
 
 % --- Executes during object creation, after setting all properties.

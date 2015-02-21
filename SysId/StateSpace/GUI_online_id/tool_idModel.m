@@ -7,11 +7,6 @@ timeSelected = timeSelected .* 1e3;
 
 %cut logStr based on timeSelected(1) and timeSelected(2)
 index = tool_selectIndexOnTime(timeSelected(1), timeSelected(2), logStr.time);
-
-%debug
-assignin('base', 'logStr', logStr);
-assignin('base', 'timeSelected', timeSelected);
-assignin('base', 'index', index);
     
 time = logStr.time(index);
 meanTs = mean(diff(time)); %in milliseconds
@@ -23,6 +18,7 @@ dataId.dataYawRate = iddata(logStr.yawRate(index), ...
 dataId.dataYaw = iddata(logStr.yaw(index), ...
                         logStr.rudder(index),...
                         meanTs);
+                    
 dataId.time_sysId = time;
 
 %see which type of model we have to use
