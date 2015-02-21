@@ -1,4 +1,4 @@
-function [A, B, Dt] = tool_computeBestFullAB(dataId)
+function [A, B, Dt] = tool_computeBlackBoxModel(dataId)
 
 %take yaw rate
 W = dataId.dataYawRate.OutputData;

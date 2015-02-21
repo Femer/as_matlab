@@ -208,10 +208,10 @@ if(strcmp(selectedLog, 'log list') ~= 1)
     modelType = {'_black', '_grey'};
     eval(['handles.idModels.' selectedLog modelType{selectedModel} ' = model;']);
     guidata(hObject, handles);
-    %update idModel list
-    tool_updateModelList(handles);
     %debug
     assignin('base', 'h', handles);
+    %update idModel list
+    tool_updateModelList(handles);
 else
     %error, no valid log selected
     msgbox('Please select a valid log', 'Error','error');
@@ -251,12 +251,17 @@ end
 
 % --- Executes on selection change in p_idModels.
 function p_idModels_Callback(hObject, eventdata, handles)
-% hObject    handle to p_idModels (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 
-% Hints: contents = cellstr(get(hObject,'String')) returns p_idModels contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from p_idModels
+contents = cellstr(get(hObject,'String')); 
+nameModel = contents{get(hObject,'Value')};
+
+%if nameModel ~= identified models
+if(strcmp(nameModel, 'identified models') ~= 1)
+    %take the model
+    eval(['modelSelected = handles.idModels.' nameModel ';']);
+    %print the model selected in the text box
+    tool_printIdModel(handles, modelSelected);
+end
 
 
 % --- Executes during object creation, after setting all properties.

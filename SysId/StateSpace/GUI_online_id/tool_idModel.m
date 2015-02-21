@@ -27,7 +27,7 @@ dataId.time_sysId = time;
 
 %see which type of model we have to use
 if typeModel == 1
-    [A, B, Dt] = tool_computeBestFullAB(dataId);
+    [A, B, Dt] = tool_computeBlackBoxModel(dataId);
 else
     [aStar, bStar, Dt] = tool_computeGreyBoxModel(dataId);
     A = [aStar,  0;
