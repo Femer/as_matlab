@@ -80,17 +80,16 @@ function pushbutton1_Callback(hObject, eventdata, handles)
 
 % --- Executes on button press in b_load_logs.
 function b_load_logs_Callback(hObject, eventdata, handles)
-%[file_name, path_name] = uigetfile('*.txt');
+[file_name, path_name] = uigetfile('*.txt');
 
+%load('datiProva');
 
-%if ~isequal(file_name, 0) %if valid files has been selected
-if 1
-file_name = 'test.txt';    
+if ~isequal(file_name, 0) %if valid files has been selected
     
-%     full_path = fullfile(path_name, file_name);
-%     %read file
-%     fileID = fopen(full_path); 
-    fileID = fopen('test.txt'); 
+    
+    full_path = fullfile(path_name, file_name);
+    %read file
+    fileID = fopen(full_path); 
     header = textscan(fileID, '%s %s %s %s', 1);  
     rows = textscan(fileID, '%f %f %f %f');   
     fclose(fileID);
@@ -143,7 +142,7 @@ file_name = 'test.txt';
     else
         %no errors, save data in handles
         log.time = rows{timeIndex};
-        log.yawRate = rows{yawRateIndex};
+        log.yawSpeed = rows{yawRateIndex};
         log.yaw = rows{yawIndex};
         log.rudder = rows{rudderIndex};
         %call the log as the name of the loaded file
@@ -166,11 +165,13 @@ function p_logList_Callback(hObject, eventdata, handles)
 contents = cellstr(get(hObject,'String')); %returns p_logList contents as cell array
 selectedItem = contents{get(hObject,'Value')}; %returns selected item from p_logList
 
-if(strcmp(selectedItem, 'log list') ~= 1)
-   %plot selected log
+if(strcmp(selectedItem, 'log list') )
+   %plot log selected
+   index = selectedItem - 1; 
+   logNames = fieldnames(handles.logs);
    
-   eval(['logStr = handles.logs.' selectedItem ';']);
-   tool_plotLog(handles, logStr);
+   eval(['log = handles.logs.' logNames{index} ';']);
+   tool_plotLog(handles, log);
 end
 
 
