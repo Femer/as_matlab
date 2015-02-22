@@ -1,4 +1,4 @@
-function [retVal, model] = tool_idModel(typeModel, timeSelected, logStr)
+function [retVal, model] = tool_idModel(typeModel, timeSelected, logStr, resamplingTime)
 
 retVal = 0;
 
@@ -33,6 +33,17 @@ else
          0];
 end
 
+%if resamplingTime > 1, use it with d2d command
+if(resamplingTime > 1)
+    oringSys = ss(A, B, [], [], 1);%sampling time = 1, i.e. the original one
+    resampledSys = d2d(oringSys, resamplingTime);
+    A = resampledSys.a;
+    B = resampledSys.b;
+    Dt = Dt * resamplingTime;
+end
+
+
+%save model
 model.A = A;
 model.B = B;
 model.Dt = Dt;

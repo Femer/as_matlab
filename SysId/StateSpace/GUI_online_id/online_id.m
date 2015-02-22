@@ -22,7 +22,7 @@ function varargout = online_id(varargin)
 
 % Edit the above text to modify the response to help online_id
 
-% Last Modified by GUIDE v2.5 21-Feb-2015 17:08:36
+% Last Modified by GUIDE v2.5 22-Feb-2015 10:12:19
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -196,17 +196,22 @@ selectedModel = get(handles.p_typeModel,'Value');
 contents = cellstr(get(handles.p_logList,'String')); %returns p_logList contents as cell array
 selectedLog = contents{get(handles.p_logList,'Value')}; %returns selected item from p_logList
 
+%take sampling time to use in d2d command
+resamplingTime = str2double(get(handles.e_newSampling, 'String'));
+
 if(strcmp(selectedLog, 'log list') ~= 1)
     %call ginput to allow the user selecting starting and ending of Id data
     [timeSelected, ~] = ginput(2);
     
     %identify model, if possibile
     eval(['logStr = handles.logs.' selectedLog ';']);    
-    [retVal, model] = tool_idModel(selectedModel, timeSelected, logStr);
+    [retVal, model] = tool_idModel(selectedModel, timeSelected, logStr, resamplingTime);
     
     %add model to the list of identified model
     modelType = {'_black', '_grey'};
-    eval(['handles.idModels.' selectedLog modelType{selectedModel} ' = model;']);
+    eval(['handles.idModels.' ...
+         selectedLog modelType{selectedModel} '_sampFact' num2str(resamplingTime) ...
+         ' = model;']);
     guidata(hObject, handles);
     %debug
     assignin('base', 'h', handles);
@@ -286,8 +291,9 @@ selectedLog = contents{get(handles.p_logList,'Value')}; %returns selected item f
 contents = cellstr(get(handles.p_idModels,'String')); 
 nameModel = contents{get(handles.p_idModels,'Value')};
 
-%take resaple factor
-resampleFactor = str2double(get(handles.e_resampleFactor, 'String'));
+%after how much time the model state has to be updated with the validation
+%state?
+stateUpdateTime = str2double(get(handles.e_resampleFactor, 'String'));
 
 %make sure selectedLog ~= log list AND nameModel ~= identified model
 if(strcmp(selectedLog, 'log list') ~= 1)
@@ -295,7 +301,7 @@ if(strcmp(selectedLog, 'log list') ~= 1)
         
         eval(['validationLog = handles.logs.' selectedLog ';']);   
         eval(['modelSelected = handles.idModels.' nameModel ';']);
-        tool_validateModel(handles, modelSelected, validationLog, resampleFactor);
+        tool_validateModel(handles, modelSelected, validationLog, stateUpdateTime);
     else
         msgbox('Please select an identified model', 'Error','error');
     end
@@ -320,6 +326,40 @@ end
 % --- Executes during object creation, after setting all properties.
 function e_resampleFactor_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to e_resampleFactor (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function e_newSampling_Callback(hObject, eventdata, handles)
+% hObject    handle to e_newSampling (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+samplingFactor = str2double(get(hObject, 'String'));
+
+%make sure samplingFactor is an integer number >= 1 
+if(isnan(samplingFactor))
+    msgbox('Please insert a number', 'Error','error');
+    set(hObject, 'String', '1');
+elseif(samplingFactor < 1)
+    msgbox('Please insert a number >= 1', 'Error','error');
+    set(hObject, 'String', '1');
+else
+    %force samplingFactor to be an integer
+    set(hObject, 'String', num2str(round(samplingFactor)));
+end
+
+
+
+% --- Executes during object creation, after setting all properties.
+function e_newSampling_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to e_newSampling (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 

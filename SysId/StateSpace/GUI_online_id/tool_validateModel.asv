@@ -28,6 +28,13 @@ samplingStep = tool_computeModelSamplingSteps(model, dataId);
 [tModel, yModel, wModel] = tool_computeModelResponse(model, dataId, ...
                                                      stateUpdateTime, ...
                                                      samplingStep);
+%debug
+assignin('base', 'tModel', tModel);
+assignin('base', 'yModel', yModel);
+assignin('base', 'wModel', wModel);
+
+assignin('base', 'wModel', wModel);
+
 %plot real response Vs Model response
 
 %clear axes
@@ -39,19 +46,6 @@ time_sec = validationLog.time ./ 1e3;
 tModel = tModel ./ 1e3;
 
 lW = 1.7;
-
-%debug
-assignin('base', 'model', model);
-assignin('base', 'dataValidation', dataId);
-assignin('base', 'samplingStep', samplingStep);
-
-assignin('base', 'tModel', tModel);
-assignin('base', 'yModel', yModel);
-assignin('base', 'wModel', wModel);
-
-assignin('base', 'time_sec', time_sec);
-assignin('base', 'yawRate',  validationLog.yawRate);
-assignin('base', 'yaw',  validationLog.yaw);
 
 %plot yawRate in deg/s
 plot(handles.a_yawRate, time_sec, validationLog.yawRate .* 180 / pi, ...

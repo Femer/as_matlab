@@ -1,0 +1,16 @@
+function samplingStep = tool_computeModelSamplingSteps(model, dataValidation)
+
+%compute the sampling time of the mode, that is, every how many steps
+%the input of the validation data must be fed into the model.
+%the minimum value is necessary 1
+
+%pay attention
+samplingStep = floor(model.Dt / dataValidation.meanTs);
+
+%safety check
+if(samplingStep < 1)
+    samplingStep = 1;
+end
+
+end
+
