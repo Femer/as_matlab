@@ -22,7 +22,7 @@ function varargout = online_id(varargin)
 
 % Edit the above text to modify the response to help online_id
 
-% Last Modified by GUIDE v2.5 22-Feb-2015 17:03:25
+% Last Modified by GUIDE v2.5 22-Feb-2015 19:01:01
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -363,8 +363,8 @@ function b_exportModel_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 
-% --- Executes on button press in b_exportWeihtsDeltas.
-function b_exportWeihtsDeltas_Callback(hObject, eventdata, handles)
+% --- Executes on button press in b_exportData.
+function b_exportData_Callback(hObject, eventdata, handles)
 %see which model has been selected
 contents = cellstr(get(handles.p_idModels,'String'));
 nameModel = contents{get(handles.p_idModels,'Value')};
@@ -376,8 +376,15 @@ if(strcmp(nameModel, 'identified models') ~= 1)
     deltas = get(handles.t_deltas, 'Data');
     constraints = get(handles.t_constraints, 'Data');
     
-    tool_exportWeightsDeltas(modelSelected, nameModel, ...
-                             weights, deltas, constraints);
+    tool_exportData(modelSelected, nameModel, ...
+                    weights, deltas, constraints);
 else
     msgbox('Please select an identified model', 'Error','error');
 end
+
+
+% --- Executes on button press in b_MpcVsLqr.
+function b_MpcVsLqr_Callback(hObject, eventdata, handles)
+% hObject    handle to b_MpcVsLqr (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)

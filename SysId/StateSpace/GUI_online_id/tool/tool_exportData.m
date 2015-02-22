@@ -1,4 +1,4 @@
-function  tool_exportWeightsDeltas(model, nameModel, ...
+function  tool_exportData(model, nameModel, ...
                                    weights, deltas, constraints)
 
 
@@ -84,6 +84,9 @@ fprintf(fileID, '1\t50\tASO_DLT_RD_CM\t%0.10f\t9\n', deltaRudder);
 
 %sampling time
 fprintf(fileID, '1\t50\tASO_SPL_T_US\t%d\t9\n', samplingTime);
+%TODO adjust king of param since ASO_SPL_T_US will bel an INT32
+
+%TODO export model matrix A and B
 
 fclose(fileID);
 
