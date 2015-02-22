@@ -105,26 +105,37 @@ function pushbutton1_Callback(hObject, eventdata, handles)
 % --- Executes on button press in b_load_logs.
 function b_load_logs_Callback(hObject, eventdata, handles)
 %open load window
-[file_name, path_name] = uigetfile('*.txt');
+[file_name, path_name] = uigetfile('*.txt', 'MultiSelect', 'on');
 
-%try to load the selected txt file
-[errorInHeader, logStr, logName] = tool_loadTxtLog(file_name, path_name);
-
-%safety check and alert box
-if(errorInHeader == 1)
-    msgbox('Please log yawspeed, yaw and rudder in QGC', 'Error','error');
-else    
-    %no errors, save data in handles  
-    eval(['handles.logs.' logName ' = logStr;']);
-    guidata(hObject, handles);
-    %update log list
-    tool_updateLogList(handles);
-    %debug
-    assignin('base', 'h', handles);
+%if only a file has been selected, convert file name to call type
+if(iscell(file_name) == 0)
+    file_name = mat2cell(file_name);
 end
 
-   
+errorInHeader = 0;
+%try to load each selected txt file
+for i = 1 : length(file_name)
+    [errorInHeader, logStr, logName] = tool_loadTxtLog(file_name{i}, path_name);
     
+    %safety check and alert box
+    if(errorInHeader == 1)
+        msgbox('Please log yawspeed, yaw and rudder in QGC', 'Error','error');
+        break;
+    else
+        %no errors, save data in handles
+        eval(['handles.logs.' logName ' = logStr;']);
+        %update log list
+        tool_updateLogList(handles);
+        %debug
+        assignin('base', 'h', handles);
+    end
+end
+
+%if no errors, save handles
+if(errorInHeader == 0)
+    guidata(hObject, handles);
+end
+   
 
 
 % --- Executes on selection change in p_logList.

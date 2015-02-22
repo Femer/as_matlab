@@ -58,7 +58,8 @@ plot(handles.a_yawRate, time_sec, validationLog.yawRate .* 180 / pi, ...
     'b--*', 'LineWidth', lW);
 hold(handles.a_yawRate, 'on');
 plot(handles.a_yawRate, tModel, wModel .* 180 / pi, ...
-    'c--*', 'LineWidth', lW);
+    'Color', [245 86 1] ./ 255, 'LineStyle', '--', ...
+    'Marker', '*', 'LineWidth', lW);
 legend(handles.a_yawRate, 'real', 'model');
 
 grid(handles.a_yawRate);
@@ -70,7 +71,8 @@ plot(handles.a_yaw, time_sec, validationLog.yaw .* 180 / pi, ...
     'b--*', 'LineWidth', lW);
 hold(handles.a_yaw, 'on');
 plot(handles.a_yaw, tModel, yModel .* 180 / pi, ...
-    'c--*', 'LineWidth', lW);
+    'Color', [245 86 1] ./ 255, 'LineStyle', '--', ...
+    'Marker', '*', 'LineWidth', lW);
 legend(handles.a_yaw, 'real', 'model');
 
 grid(handles.a_yaw);
