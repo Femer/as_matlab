@@ -58,8 +58,18 @@ handles.output = hObject;
 % Update handles structure
 guidata(hObject, handles);
 
+%clc
+clc;
+
 %add tool folder to the path
 addpath('tool');
+
+%debug
+path_name = 'C:\Users\femer_000\Desktop\Tesi\mioCodice\Matlab\as_matlab\SysId\StateSpace\GUI_online_id\';
+[~, logStr, logName] = tool_loadTxtLog('tack8_21_01_2015.txt', path_name);
+
+eval(['handles.logs.' logName ' = logStr;']);
+guidata(hObject, handles);
 
 % UIWAIT makes online_id wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
@@ -83,10 +93,24 @@ function pushbutton1_Callback(hObject, eventdata, handles)
 
 % --- Executes on button press in b_load_logs.
 function b_load_logs_Callback(hObject, eventdata, handles)
+%open load window
 [file_name, path_name] = uigetfile('*.txt');
 
-errorInHeader = tool_loadTxtLog(file_name, path_name, hObject, handles);
+%try to load the selected txt file
+[errorInHeader, logStr, logName] = tool_loadTxtLog(file_name, path_name);
 
+%safety check and alert box
+if(errorInHeader == 1)
+    msgbox('Please log yawspeed, yaw and rudder in QGC', 'Error','error');
+else    
+    %no errors, save data in handles  
+    eval(['handles.logs.' logName ' = logStr;']);
+    guidata(hObject, handles);
+    %update log list
+    tool_updateLogList(handles);
+    %debug
+    assignin('base', 'h', handles);
+end
 
    
     

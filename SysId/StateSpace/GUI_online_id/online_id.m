@@ -64,6 +64,24 @@ clc;
 %add tool folder to the path
 addpath('tool');
 
+%debug
+path_name = ...
+'C:\Users\femer_000\Desktop\Tesi\mioCodice\Matlab\as_matlab\SysId\StateSpace\GUI_online_id\';
+
+[~, logStr, logName] = tool_loadTxtLog('tack8_21_01_2015.txt', path_name);
+eval(['handles.logs.' logName ' = logStr;']);
+guidata(hObject, handles);
+
+[~, logStr, logName] = tool_loadTxtLog('tack5B_21_01_2015.txt', path_name);
+eval(['handles.logs.' logName ' = logStr;']);
+guidata(hObject, handles);
+
+[~, logStr, logName] = tool_loadTxtLog('data4_10_02_2015.txt', path_name);
+eval(['handles.logs.' logName ' = logStr;']);
+guidata(hObject, handles);
+
+tool_updateLogList(handles);
+
 % UIWAIT makes online_id wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
 
