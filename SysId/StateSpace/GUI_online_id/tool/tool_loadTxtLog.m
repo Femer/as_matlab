@@ -53,7 +53,8 @@ if ~isequal(file_name, 0) %if valid files has been selected
             errorInHeader = 0;
             logStr.time = rows{timeIndex};
             logStr.yawRate = rows{yawRateIndex};
-            logStr.yaw = rows{yawIndex};
+            %UNWRAP yaw angle!
+            logStr.yaw = unwrap(rows{yawIndex});
             logStr.rudder = rows{rudderIndex};
             %call the log as the name of the loaded file
             pointIndex = regexp(file_name, '\.');
