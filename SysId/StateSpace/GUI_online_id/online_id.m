@@ -58,6 +58,12 @@ handles.output = hObject;
 % Update handles structure
 guidata(hObject, handles);
 
+%clc
+clc;
+
+%add tool folder to the path
+addpath('tool');
+
 % UIWAIT makes online_id wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
 
@@ -80,84 +86,27 @@ function pushbutton1_Callback(hObject, eventdata, handles)
 
 % --- Executes on button press in b_load_logs.
 function b_load_logs_Callback(hObject, eventdata, handles)
-%[file_name, path_name] = uigetfile('*.txt');
+%open load window
+[file_name, path_name] = uigetfile('*.txt');
 
+%try to load the selected txt file
+[errorInHeader, logStr, logName] = tool_loadTxtLog(file_name, path_name);
 
-%if ~isequal(file_name, 0) %if valid files has been selected
-if 1
-file_name = 'test.txt';    
-    
-%     full_path = fullfile(path_name, file_name);
-%     %read file
-%     fileID = fopen(full_path); 
-    fileID = fopen('test.txt'); 
-    header = textscan(fileID, '%s %s %s %s', 1);  
-    rows = textscan(fileID, '%f %f %f %f');   
-    fclose(fileID);
-    
-    %make sure in the txt file loaded there are timeStamp, yawRate, yaw and
-    %rudder command.
-    errorInHeader = 0; 
-    
-    %index of each needed field in the header struct
-    timeIndex = [];
-    yawRateIndex = [];
-    yawIndex = [];
-    rudderIndex = [];
-    
-    if(length(header) ~= 4)
-        errorInHeader = 1;
-    else
-        %use reg exp
-        neededField = {'TIME', 'yawspeed$', 'yaw$', 'Rud$'};
-        for i = 1 : length(header)
-           for j = 1 : length(neededField)
-               resRegExp = regexp(header{i}, neededField{j});
-               if(~isempty(resRegExp{1}))
-                   %found a needed field in header{i}
-                   if(j == 1)
-                       timeIndex = j;
-                   elseif(j == 2)
-                       yawRateIndex = j;
-                   elseif(j == 3)
-                       yawIndex = j;
-                   elseif(j == 4)
-                       rudderIndex = j;
-                   end
-               end
-           end
-        end
-        %check if every needed field was found
-        if(isempty(timeIndex) || ...
-           isempty(yawRateIndex) || ...
-           isempty(yawIndex) || ...
-           isempty(rudderIndex))
-            
-                errorInHeader = 1;
-        end
-    end
-
-    %safety check and alert box
-    if(errorInHeader == 1)
-        msgbox('Please log yawspeed, yaw and rudder in QGC', 'Error','error');
-    else
-        %no errors, save data in handles
-        log.time = rows{timeIndex};
-        log.yawRate = rows{yawRateIndex};
-        log.yaw = rows{yawIndex};
-        log.rudder = rows{rudderIndex};
-        %call the log as the name of the loaded file
-        pointIndex = regexp(file_name, '\.');
-        logName = file_name(1 : pointIndex - 1);
-        eval(['handles.logs.' logName ' = log;']);
-        guidata(hObject, handles);
-        %update log list
-        tool_updateLogList(handles);
-        %debug
-        assignin('base', 'h', handles);
-    end
-    
+%safety check and alert box
+if(errorInHeader == 1)
+    msgbox('Please log yawspeed, yaw and rudder in QGC', 'Error','error');
+else    
+    %no errors, save data in handles  
+    eval(['handles.logs.' logName ' = logStr;']);
+    guidata(hObject, handles);
+    %update log list
+    tool_updateLogList(handles);
+    %debug
+    assignin('base', 'h', handles);
 end
+
+   
+    
 
 
 % --- Executes on selection change in p_logList.
