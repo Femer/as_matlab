@@ -22,7 +22,7 @@ function varargout = online_id(varargin)
 
 % Edit the above text to modify the response to help online_id
 
-% Last Modified by GUIDE v2.5 22-Feb-2015 10:12:19
+% Last Modified by GUIDE v2.5 22-Feb-2015 17:03:25
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -54,6 +54,14 @@ function online_id_OpeningFcn(hObject, eventdata, handles, varargin)
 
 % Choose default command line output for online_id
 handles.output = hObject;
+
+%default values for weights, deltas and constraints
+weights = [1, 3, 1, 20]; 
+deltas = [10, 10, 0.1]; 
+constraints = [1, 3.6];
+set(handles.t_weights, 'Data', weights);
+set(handles.t_deltas, 'Data', deltas);
+set(handles.t_constraints, 'Data', constraints);
 
 % Update handles structure
 guidata(hObject, handles);
@@ -109,7 +117,7 @@ function b_load_logs_Callback(hObject, eventdata, handles)
 
 %if only a file has been selected, convert file name to call type
 if(iscell(file_name) == 0)
-    file_name = mat2cell(file_name);
+    file_name ={file_name};
 end
 
 errorInHeader = 0;
@@ -185,7 +193,7 @@ if(strcmp(selectedLog, 'log list') ~= 1)
     eval(['logStr = handles.logs.' selectedLog ';']);    
     [retVal, model] = tool_idModel(selectedModel, timeSelected, logStr, resamplingTime);
     
-    %add model to the list of identified model
+    %add model to the list of identified models
     modelType = {'_black', '_grey'};
     eval(['handles.idModels.' ...
          selectedLog modelType{selectedModel} '_sampFact' num2str(resamplingTime) ...
@@ -275,7 +283,7 @@ stateUpdateTime = str2double(get(handles.e_resampleFactor, 'String'));
 
 %make sure selectedLog ~= log list AND nameModel ~= identified model
 if(strcmp(selectedLog, 'log list') ~= 1)
-    if(strcmp(nameModel, 'identified model') ~= 1)
+    if(strcmp(nameModel, 'identified models') ~= 1)
         
         eval(['validationLog = handles.logs.' selectedLog ';']);   
         eval(['modelSelected = handles.idModels.' nameModel ';']);
@@ -345,4 +353,31 @@ function e_newSampling_CreateFcn(hObject, eventdata, handles)
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in b_exportModel.
+function b_exportModel_Callback(hObject, eventdata, handles)
+% hObject    handle to b_exportModel (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in b_exportWeihtsDeltas.
+function b_exportWeihtsDeltas_Callback(hObject, eventdata, handles)
+%see which model has been selected
+contents = cellstr(get(handles.p_idModels,'String'));
+nameModel = contents{get(handles.p_idModels,'Value')};
+%make sure nameModel ~= identified model
+if(strcmp(nameModel, 'identified models') ~= 1) 
+    eval(['modelSelected = handles.idModels.' nameModel ';']);
+    %export to txt file new weights, deltas and constraints values
+    weights = get(handles.t_weights, 'Data');
+    deltas = get(handles.t_deltas, 'Data');
+    constraints = get(handles.t_constraints, 'Data');
+    
+    tool_exportWeightsDeltas(modelSelected, nameModel, ...
+                             weights, deltas, constraints);
+else
+    msgbox('Please select an identified model', 'Error','error');
 end

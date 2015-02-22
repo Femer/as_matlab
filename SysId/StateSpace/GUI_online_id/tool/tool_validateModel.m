@@ -34,6 +34,10 @@ samplingStep = tool_computeModelSamplingSteps(model, dataId);
 cla(handles.a_yawRate);
 cla(handles.a_yaw);
 cla(handles.a_rudder);
+
+legend(handles.a_yawRate,'hide');
+legend(handles.a_yaw,'hide');
+legend(handles.a_rudder,'hide');
 %time in sec
 time_sec = validationLog.time ./ 1e3;
 tModel = tModel ./ 1e3;

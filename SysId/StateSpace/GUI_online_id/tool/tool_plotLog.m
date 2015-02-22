@@ -9,6 +9,10 @@ lW = 1.7;
 cla(handles.a_yawRate);
 cla(handles.a_yaw);
 cla(handles.a_rudder);
+
+legend(handles.a_yawRate,'hide');
+legend(handles.a_yaw,'hide');
+legend(handles.a_rudder,'hide');
 %plot yawRate in deg/s
 plot(handles.a_yawRate, time_sec, logStr.yawRate .* 180 / pi, ...
     'b--*', 'LineWidth', lW);
