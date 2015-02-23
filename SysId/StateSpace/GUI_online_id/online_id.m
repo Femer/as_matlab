@@ -22,7 +22,7 @@ function varargout = online_id(varargin)
 
 % Edit the above text to modify the response to help online_id
 
-% Last Modified by GUIDE v2.5 22-Feb-2015 19:01:01
+% Last Modified by GUIDE v2.5 23-Feb-2015 10:20:42
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -274,29 +274,29 @@ function b_validate_Callback(hObject, eventdata, handles)
 contents = cellstr(get(handles.p_logList,'String')); %returns p_logList contents as cell array
 selectedLog = contents{get(handles.p_logList,'Value')}; %returns selected item from p_logList
 %see which model has been selected
-contents = cellstr(get(handles.p_idModels,'String')); 
-nameModel = contents{get(handles.p_idModels,'Value')};
+[error, modelSelected] = tool_getSelectedIdModel(handles);
 
-%after how much time the model state has to be updated with the validation
-%state?
-stateUpdateTime = str2double(get(handles.e_resampleFactor, 'String'));
-
-%make sure selectedLog ~= log list AND nameModel ~= identified model
-if(strcmp(selectedLog, 'log list') ~= 1)
-    if(strcmp(nameModel, 'identified models') ~= 1)
-        
-        eval(['validationLog = handles.logs.' selectedLog ';']);   
-        eval(['modelSelected = handles.idModels.' nameModel ';']);
-        tool_validateModel(handles, modelSelected, validationLog, stateUpdateTime);
+%check if any error
+if(error == 0)
+    
+    updateState = get(handles.c_updateState, 'Value');
+    if(updateState == 1)
+        %after how much time the model state has to be updated with the validation
+        %state?
+        stateUpdateTime = tool_getPredHorSec(handles, modelSelected);
     else
-        msgbox('Please select an identified model', 'Error','error');
+        %do not update the model state with the real one
+        stateUpdateTime = -1;
+    end
+    
+    %make sure selectedLog ~= log list
+    if(strcmp(selectedLog, 'log list') ~= 1)
+        eval(['validationLog = handles.logs.' selectedLog ';']);
+        tool_validateModel(handles, modelSelected, validationLog, stateUpdateTime);
     end
 else
     msgbox('Please select a log to use as validation data', 'Error','error');
 end
-
-
-
 
 function e_resampleFactor_Callback(hObject, eventdata, handles)
 
@@ -388,3 +388,42 @@ function b_MpcVsLqr_Callback(hObject, eventdata, handles)
 % hObject    handle to b_MpcVsLqr (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on selection change in p_predHorizon.
+function p_predHorizon_Callback(hObject, eventdata, handles)
+%take the selected identified model
+[error, modelSelected] = tool_getSelectedIdModel(handles);
+
+%check error
+if(error == 0)
+    %based on the prediction horizon, in steps, compute the prediction horizon
+    %in seconds
+    predHor_s = tool_getPredHorSec(handles, modelSelected);
+
+    %show it on screen
+    set(handles.t_predHorizon, 'String', ...
+        ['prediction horizon: ' num2str(predHor_s) ' [sec].']);
+end
+
+
+% --- Executes during object creation, after setting all properties.
+function p_predHorizon_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to p_predHorizon (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in c_updateState.
+function c_updateState_Callback(hObject, eventdata, handles)
+% hObject    handle to c_updateState (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of c_updateState
