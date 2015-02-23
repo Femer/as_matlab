@@ -22,7 +22,7 @@ function varargout = online_id(varargin)
 
 % Edit the above text to modify the response to help online_id
 
-% Last Modified by GUIDE v2.5 23-Feb-2015 11:59:02
+% Last Modified by GUIDE v2.5 23-Feb-2015 15:55:44
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -368,34 +368,33 @@ function b_exportModel_Callback(hObject, eventdata, handles)
 
 % --- Executes on button press in b_exportData.
 function b_exportData_Callback(hObject, eventdata, handles)
-%see which model has been selected
-contents = cellstr(get(handles.p_idModels,'String'));
-nameModel = contents{get(handles.p_idModels,'Value')};
-%make sure nameModel ~= identified model
-if(strcmp(nameModel, 'identified models') ~= 1) 
-    eval(['modelSelected = handles.idModels.' nameModel ';']);
+
+%see which models have been selected to design the LQR and MPC.
+[error, lqrModel, nameLqr, mpcModel, nameMpc] = tool_getLqrMpcModels(handles);
+
+%error check
+if(error == 0) 
     %export to txt file new weights, deltas and constraints values
     weights = get(handles.t_weights, 'Data');
     deltas = get(handles.t_deltas, 'Data');
     constraints = get(handles.t_constraints, 'Data');
     
-    tool_exportData(modelSelected, nameModel, ...
+    tool_exportData(lqrModel, nameLqr, mpcModel, nameMpc, ...
                     weights, deltas, constraints);
-else
-    msgbox('Please select an identified model', 'Error','error');
+
 end
 
 
 % --- Executes on button press in b_MpcVsLqr.
 function b_MpcVsLqr_Callback(hObject, eventdata, handles)
-%take the selected identified model
-[errorIdModel, idModel] = tool_getSelectedIdModel(handles);
+%see which models have been selected to design the LQR and MPC.
+[errorDesignModel, lqrModel, ~, mpcModel, ~] = tool_getLqrMpcModels(handles);
 
 %take the model to be considered as "real" in the simulation
 [errorRealModel, realModel] = tool_getRealModel(handles);
 
 %check errors
-if(errorIdModel == 0 && errorRealModel == 0)
+if(errorDesignModel == 0 && errorRealModel == 0)
     %take the prediction horizon, in steps
     contents = cellstr(get(handles.p_predHorizon,'String')); 
     strPredHor = contents{get(handles.p_predHorizon,'Value')};
@@ -409,9 +408,18 @@ if(errorIdModel == 0 && errorRealModel == 0)
     %which type of tack should we make?
     typeTack = get(handles.p_typeTack, 'Value');
     
+    %debug
+    assignin('base', 'realModel', realModel);
+    assignin('base', 'lqrModel', lqrModel);
+    assignin('base', 'mpcModel', mpcModel);
+    assignin('base', 'predHor_steps', predHor_steps);
+    assignin('base', 'weights', weights);
+    assignin('base', 'deltas', deltas);
+    assignin('base', 'constraints', constraints);
+    assignin('base', 'typeTack', typeTack);
     %simulate MPC and LQR response
-    sim_MpcVsLqr(realModel, idModel, predHor_steps, ...
-                 weights, deltas, constraints, typeTack);
+%     sim_MpcVsLqr(realModel, lqrModel, mpcModel, predHor_steps, ...
+%                  weights, deltas, constraints, typeTack);
 end
 
 
@@ -490,6 +498,52 @@ function p_typeTack_Callback(hObject, eventdata, handles)
 % --- Executes during object creation, after setting all properties.
 function p_typeTack_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to p_typeTack (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on selection change in p_lqrModel.
+function p_lqrModel_Callback(hObject, eventdata, handles)
+% hObject    handle to p_lqrModel (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns p_lqrModel contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from p_lqrModel
+
+
+% --- Executes during object creation, after setting all properties.
+function p_lqrModel_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to p_lqrModel (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on selection change in p_mpcModel.
+function p_mpcModel_Callback(hObject, eventdata, handles)
+% hObject    handle to p_mpcModel (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns p_mpcModel contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from p_mpcModel
+
+
+% --- Executes during object creation, after setting all properties.
+function p_mpcModel_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to p_mpcModel (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 

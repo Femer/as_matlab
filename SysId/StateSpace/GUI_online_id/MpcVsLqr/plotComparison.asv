@@ -1,0 +1,123 @@
+function plotComparison(lqrData, mpcData, params)
+
+figure;
+
+%usefull index
+yawRateIndex = 1;
+yawIndex = 2;
+%another useful index for the extended state
+lastRudderIndex = 3;
+
+set(gcf,'name', ...
+    ['MPC (forces), steps prediction Horizon: '], ...
+    'numbertitle', 'off');
+
+%line width
+lW0 = 1.3;
+
+%legend
+leg = { 'w real MPC', ...
+    'w real LQR', ...
+    '\psi real MPC', ...
+    '\psi real LQR', ...
+    'rud MPC',...
+    'rud LQR'};
+
+
+
+yawReal = [mpcData.xHatSim(yawIndex, :);
+           lqrData.xHatSim(yawIndex, :)];
+       
+yawRateReal = [mpcData.xHatSim(yawRateIndex, :);
+               lqrData.xHatSim(yawRateIndex, :)];
+           
+%rudder for the real system, NOT for the extended one    
+rudder{1} = mpcData.rudCmd;
+rudder{2} = lqrData.rudCmd;
+
+controllerTimeStr{1} = mpcData.time;
+controllerTimeStr{2} = lqrData.time;
+    
+%state estimated by the time varying Kalman filter
+yawEstVector = [mpcData.xHatEst(yawIndex,:);
+                lqrData.xHatEst(yawIndex,:)];
+            
+%state estimated by the time vayring Kalman filter
+yawRateEstVector = [mpcData.xHatEst(yawRateIndex,:);
+                    lqrData.xHatEst(yawRateIndex,:)];
+%full simulation time vector
+time = (0:params.N) * initParam.realModelDt;
+
+for i = 1 : 2
+   index = i;
+   
+   controllerTime = controllerTimeStr{i};
+   
+   h1 = subplot(3, 2, index);
+   
+   plot(time, yawRateReal(i, :) .* 180 / pi, ...
+       'LineWidth', 1.9, 'Color', [88 25 225] ./ 255);
+   hold on;
+   
+   plot(controllerTime, yawRateEstVector(i, :) .* 180 / pi, 'c-.', ...
+       'LineWidth', 1.9, 'Color', [245 86 1] ./ 255);
+
+   plot([controllerTime(1) controllerTime(end)], [deltaYR deltaYR], 'c--', 'LineWidth', 1.9);
+   plot([controllerTime(1) controllerTime(end)], -[deltaYR deltaYR], 'c--', 'LineWidth', 1.9);
+   grid on;
+   ylabel('[deg/s]');
+   xlabel('Time [sec]');
+   xlim([time(1) time(end)]);
+   legend(leg{index});
+   legend(leg{index}, 'Location', 'southeast');
+   
+   
+   index = index + 2;
+   
+   h2 = subplot(3, 2, index);
+   plot(time, yawReal(i, :) .* 180 / pi, ...
+       'LineWidth', 1.9, 'Color', [88 25 225] ./ 255);
+   hold on;
+   
+   plot(time(1:end-1), yawEstVector(i, :) .* 180 / pi, 'c-.', ...
+       'LineWidth', 1.9, 'Color', [245 86 1] ./ 255);
+   
+
+   plot([time(1) time(end-1)], [deltaY deltaY], 'c--', 'LineWidth', 1.9);
+   plot([time(1) time(end-1)], -[deltaY deltaY], 'c--', 'LineWidth', 1.9);
+
+   
+   grid on;
+   ylabel('[deg]');
+   xlabel('Time [sec]');
+   xlim([time(1) time(end)]);
+   legend(leg{index});
+      
+   
+   index = index + 2;
+   
+   h3 = subplot(3, 2, index);
+   
+   timeR = controllerTime{i};
+   plot(timeR, rudder{i}, 'm--*', 'LineWidth', 1.4);
+   hold on;
+   plot([timeR(1) timeR(end)], [rudderMax rudderMax], 'r-.', 'LineWidth', lW0);
+   plot([timeR(1) timeR(end)], [-rudderMax -rudderMax], 'r-.', 'LineWidth', lW0);
+   
+   plot([timeR(1) timeR(end)], [deltaRud deltaRud], 'c--', 'LineWidth', 1.9);
+   plot([timeR(1) timeR(end)], -[deltaRud deltaRud], 'c--', 'LineWidth', 1.9);
+   
+   grid on;
+   ylabel('Rudder [cmd]');
+   xlabel('Time [sec]');
+   xlim([timeR(1) timeR(end)]);
+   legend(leg{index}, 'Location', 'southeast');
+   
+   linkaxes([h1, h2, h3], 'x');
+   
+   set(h3, 'XLim', [timeR(1), timeR(end)]);
+end
+
+
+end
+

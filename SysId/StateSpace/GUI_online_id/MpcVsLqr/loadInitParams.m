@@ -21,8 +21,16 @@ rudderBeforeTack = 0; %between -1 and 1
 %absolute value of alpha star
 absAlphaNew = 45 * pi / 180;
 
+%physical constraints
+rudderMax = 1;
+rudderVel_cmd_sec = 4;
+
 %% UNtunable
 
+%constraints
+initParam.rudderMax = rudderMax;
+initParam.rudderVel_cmd_sec = rudderVel_cmd_sec;
+%noise statistics
 initParam.convarianceStr.R1 = noiseModel * eye(3); %noise on the model
 initParam.convarianceStr.R2 = blkdiag(varYawRate, varYaw, varRudder); %noisy measurements
 
@@ -35,13 +43,14 @@ else
    yaw0 = -2 * absAlphaNew;
 end
 
-%mesurements noise
-initParam.measNoise = [sqrt(varYawRate) * randn(1, N);
-                       sqrt(varYaw) * randn(1, N);
-                       sqrt(varRudder) * randn(1, N)];
-
 %total simulation steps fo the real model to reach tF
 initParam.N = round(tF / realModel.Dt);
+initParam.realModelDt = realModel.Dt;
+%mesurements noise
+initParam.measNoise = [sqrt(varYawRate) * randn(1, initParam.N);
+                       sqrt(varYaw) * randn(1, initParam.N);
+                       sqrt(varRudder) * randn(1, initParam.N)];
+
 
 %guess on the initial state of the KF
 initParam.guessX1Hat = [  0 + sqrt(varYawRate) * randn();

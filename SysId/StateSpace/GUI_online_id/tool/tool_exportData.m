@@ -1,5 +1,5 @@
-function  tool_exportData(model, nameModel, ...
-                                   weights, deltas, constraints)
+function  tool_exportData(lqrModel, nameLqr, mpcModel, nameMpc, ...
+                          weights, deltas, constraints)
 
 
 % Weights 
@@ -8,8 +8,9 @@ qYaw = weights(2);
 rU = weights(3);
 sChattering = weights(4);
 
-%sampling time of the model, in uSec
-samplingTime = round(model.Dt * 1e6);
+%sampling time of the model used for the LQR, in uSec
+lqrSamplingTime = round(lqrModel.Dt * 1e6);
+mpcSamplingTime = round(mpcModel.Dt * 1e6);
 
 %constraints
 rudderMax = constraints(1);%
@@ -26,27 +27,29 @@ Q = blkdiag(qYawRate, qYaw, rU);
 R = sChattering;
 
 %build extended state and extended model
-extendedModel = tool_extendModel(model);
+lqrExtMod = tool_extendModel(lqrModel);
+mpcExtMod = tool_extendModel(mpcModel);
     
-%compute gain matrix for the LQR and the solution of the discrete riccati
-%equation
-[K_LQR, M, ~] = dlqr(extendedModel.A, extendedModel.B, Q, R); 
+%compute gain matrix for the LQR 
+[K_LQR, ~, ~] = dlqr(lqrExtMod.A, lqrExtMod.B, Q, R); 
 
 %MPC forces Hesian matrix
 H = [sChattering; qYawRate; qYaw; rU];
 
-%MPC forces Hesian matrix for final cost
+%MPC forces Hesian matrix for final cost using dare solution
+M = dare(mpcExtMod.A, mpcExtMod.B, Q, R);
 H_final = blkdiag(0, M);
 
 %convert rudderVel from cmd/s using the sample time of the model
-rudderVelSim = rudderVelocity * model.Dt;
+rudderVelSim = rudderVelocity * mpcModel.Dt;
 %MPC lower and upper bound
 lowerBound = [-rudderVelSim; -rudderMax];
 upperBound = [rudderVelSim; rudderMax];
 
 %write txt file
 %text string for the .txt file
-fileID = fopen([nameModel '.txt'], 'w');
+nameFile = ['lqr_' nameLqr '_mpc_' nameMpc];
+fileID = fopen([nameFile '.txt'], 'w');
 %LQR gain
 fprintf(fileID, '1\t50\tASO_LQR_K1\t%0.10f\t9\n', K_LQR(1));
 fprintf(fileID, '1\t50\tASO_LQR_K2\t%0.10f\t9\n', K_LQR(2));
@@ -79,9 +82,10 @@ fprintf(fileID, '1\t50\tASO_DLT_Y_D\t%0.10f\t9\n', deltaYaw);
 fprintf(fileID, '1\t50\tASO_DLT_RD_CM\t%0.10f\t9\n', deltaRudder);
 
 %sampling time
-fprintf(fileID, '1\t50\tASO_SPL_T_US\t%d\t6\n', samplingTime);
+fprintf(fileID, '1\t50\tASO_SPL_LQR_US\t%d\t6\n', lqrSamplingTime);
+fprintf(fileID, '1\t50\tASO_SPL_MPC_US\t%d\t6\n', mpcSamplingTime);
 
-%TODO export model matrix A and B
+%TODO export model matrix A and B, for LQR and MPC ?!
 
 fclose(fileID);
 

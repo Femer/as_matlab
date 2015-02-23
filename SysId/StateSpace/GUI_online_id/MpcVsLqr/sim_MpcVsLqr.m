@@ -1,6 +1,9 @@
-function sim_MpcVsLqr(realModel, idModel, predHor_steps, ...
+function sim_MpcVsLqr(realModel, lqrModel, mpcModel, predHor_steps, ...
                       weights, deltas, constraints, typeTack)
 
+%mpc subfolders
+p = genpath('MpcVsLqr/mpc_boatTack_h10');
+addpath(p);
 % Weights 
 qYawRate = weights(1);
 qYaw = weights(2);
@@ -11,19 +14,15 @@ sChattering = weights(4);
 rudderMax = constraints(1);
 rudderVelocity = constraints(2); %cmd / s
 
-%deltas
-deltaYawRate = deltas(1); %in deg!
-deltaYaw = deltas(2); %in deg!
-deltaRudder = deltas(3);
-
-%take sampling time of the real model and of the identified model
+%take sampling time of the real model and of the lqr and mpc models
 realDt_s = realModel.Dt;
-idDt_s = idModel.Dt;
+lqrDt_s = lqrModel.Dt;
+mpcDt_s = mpcModel.Dt;
 
-%realDt_s must be <= idDt_s
-if(realDt_s > idDt_s)
+%lqrDt_s and mpcDt_s must be >= idDt_s
+if(lqrDt_s < realDt_s || mpcDt_s < realDt_s)
    msgbox({'The system assumed as the real one', ...
-           'must have a Dt smaller than the one used', ...
+           'must have a Dt smaller than the ones used', ...
            'to compute the MPC and the LQR'}, 'Error','error'); 
    return;
 end
@@ -32,25 +31,59 @@ end
 Q = blkdiag(qYawRate, qYaw, rU);
 R = sChattering;
 %build hessina matrix for MPC
-H = blkdiag(sChattering, qYawRate, qYaw, rU);
+H = [sChattering; qYawRate; qYaw; rU];
 
 %build extended state and extended model
-extRealMod = tool_extendModel(realModel);
-extIdMod = tool_extendModel(idModel);
-    
-%compute gain matrix for the LQR and the solution of the discrete riccati
-%equation. M will be used as final cost in the MPC
-[K_LQR, M, ~] = dlqr(extIdMod.A, extIdMod.B, Q, R);
+realExtMod = tool_extendModel(realModel);
+lqrExtMod = tool_extendModel(lqrModel);
+mpcExtMod = tool_extendModel(mpcModel);
 
-%based on predHor_steps value see which MPC solve has to be used
-mpcHandler = -1;
-if(predHor_steps == 10)
-    addpath('mpc_boatTack_h10');
-    mpcHandler =  @mpc_boatTack_h10;
-end
+[nx, nu] = size(realExtMod.B);
+    
+%compute gain matrix for the LQR 
+[K_LQR, ~, ~] = dlqr(lqrExtMod.A, lqrExtMod.B, Q, R);
+
+%compute final cost of the MPC
+M = dare(mpcExtMod.A, mpcExtMod.B, Q, R);
+H_final = blkdiag(0, M);
 
 %before starting the two simulations, load usefull paramters
 initParam = loadInitParams(realModel, typeTack);
+
+%simulaions
+
+%typecontroller possible values
+indexMpcCtr = 1;
+indexLqrCtr = 2;
+
+%LQR, no mpcParams
+lqrData = simController(K_LQR, indexLqrCtr,...
+                        realExtMod, lqrExtMod, initParam, ...
+                        []);
+
+%MPC 
+
+%collect mpcParams
+mpcParams.Hessians = H;
+mpcParams.HessiansFinal = H_final;
+%veolicty from cmd/s to cmd/samplingMpcModel
+velMpcSamplingTime = rudderVelocity * mpcModel.Dt;
+mpcParams.lowerBound = [-velMpcSamplingTime; -rudderMax];
+mpcParams.upperBound = [velMpcSamplingTime; rudderMax];
+mpcParams.C = [zeros(nx, nu), mpcExtMod.A];
+mpcParams.D = [mpcExtMod.B, -eye(nx)];
+
+
+mpcData = simController(predHor_steps, indexMpcCtr,...
+                       realExtMod, mpcExtMod, initParam, ...
+                       mpcParams);
+          
+%debug
+assignin('base', 'lqrData', lqrData);
+assignin('base', 'mpcData', mpcData);
+
+%plot comparison
+plotComparison(lqrData, mpcData, initParam, deltas);
 
 end
 

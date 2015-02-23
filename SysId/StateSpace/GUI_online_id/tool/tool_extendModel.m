@@ -8,7 +8,7 @@ extendedModel.B = [model.B;
                
 extendedModel.C = eye(3);
 
-extendedModel.Dt = mode.Dt;
+extendedModel.Dt = model.Dt;
 
 end
 
