@@ -74,7 +74,7 @@ addpath('tool');
 
 %debug
 path_name = ...
-'C:\Users\femer_000\Desktop\Tesi\mioCodice\Matlab\as_matlab\SysId\StateSpace\GUI_online_id\';
+'C:\Users\IFA_sailing\Documents\FirmawareMarco\Matlab\as_matlab\SysId\StateSpace\GUI_online_id\';
 
 [~, logStr, logName] = tool_loadTxtLog('tack8_21_01_2015.txt', path_name);
 eval(['handles.logs.' logName ' = logStr;']);
