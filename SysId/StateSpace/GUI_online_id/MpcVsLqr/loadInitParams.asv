@@ -1,0 +1,57 @@
+function initParam = loadInitParams(realModel, typeTack)
+
+%% tunable 
+%total simulation time, in seconds
+initParam.tF = 10;
+
+%gaussian noise on measurements
+varYawRate = 10 * pi / 180;
+varYaw = 2 * pi / 180;
+varRudder = 0.01;
+
+%covariance matrices for Kalman filter
+initParam.convarianceStr.R1 = 0.0005 * eye(3); %noise on the model
+initParam.convarianceStr.R2 = blkdiag(varYawRate, varYaw, varRudder); %noisy measurements
+
+%rudder value before starting the tack
+rudderBeforeTack = 0; %between -1 and 1
+
+%absolute value of alpha star
+absAlphaNew = 45 * pi / 180;
+
+%% UNtunable
+
+%compute real yaw0 based in type of tack
+if(typeTack == 1)
+   %port 2 starboard haul
+   yaw0 = 
+else
+end
+
+%mesurements noise
+initParam.measNoise = [sqrt(varYawRate) * randn(1, N);
+                       sqrt(varYaw) * randn(1, N);
+                       sqrt(varRudder) * randn(1, N)];
+
+%total simulation steps fo the real model to reach tF
+initParam.N = round(initParam.tF / realModel.Dt);
+
+%guess on the initial state of the KF
+initParam.guessX1Hat = [  0 * pi / 180;
+    -yawRef + (0 * pi / 180);
+    rudderBeforeTack];
+
+%guess on the variance matrix of the KF
+initParam.guessP1_1 = blkdiag(1 * eye(2), 0);
+
+%start of the realModel used to simulate the boat in the C.L. MPC
+initParam.xHatSimMPC1 = [    3.103 * pi / 180;
+    -yawRef - sign(yawRef) * deg2rad(7);
+    rudderBeforeTack];
+
+
+%start of the realModel used to simulate the boat in the C.L. LQR
+initParam.xHatSimLQR1 = [    3.103 * pi / 180;
+    -yawRef - sign(yawRef) * deg2rad(7);
+    rudderBeforeTack];
+end

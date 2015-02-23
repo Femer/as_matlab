@@ -407,11 +407,10 @@ if(errorIdModel == 0 && errorRealModel == 0)
     constraints = get(handles.t_constraints, 'Data');
     
     %which type of tack should we make?
-    typeTack = get(handles.p_typeTack, 'Value');
+    typeTack = 
     
     %simulate MPC and LQR response
-    sim_MpcVsLqr(realModel, idModel, predHor_steps, ...
-                 weights, deltas, constraints, typeTack);
+    sim_MpcVsLqr(realModel, idModel, predHor_steps, weights, deltas, constraints);
 end
 
 

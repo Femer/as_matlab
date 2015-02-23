@@ -26,15 +26,11 @@ Q = blkdiag(qYawRate, qYaw, rU);
 R = sChattering;
 
 %build extended state and extended model
-AExt = [model.A,                      model.B;
-        zeros(1, length(model.A)),    1];
-    
-BExt = [model.B;
-        1];
+extendedModel = tool_extendModel(model);
     
 %compute gain matrix for the LQR and the solution of the discrete riccati
 %equation
-[K_LQR, M, ~] = dlqr(AExt, BExt, Q, R); 
+[K_LQR, M, ~] = dlqr(extendedModel.A, extendedModel.B, Q, R); 
 
 %MPC forces Hesian matrix
 H = [sChattering; qYawRate; qYaw; rU];
