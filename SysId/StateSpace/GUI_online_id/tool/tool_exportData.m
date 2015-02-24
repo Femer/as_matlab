@@ -13,8 +13,8 @@ lqrSamplingTime = round(lqrModel.Dt * 1e6);
 mpcSamplingTime = round(mpcModel.Dt * 1e6);
 
 %constraints
-rudderMax = constraints(1);%
-rudderVelocity = constraints(2);
+rudderMax = constraints(1);% cmd
+rudderVelocity = constraints(2); %cmd/s
 
 %deltas
 deltaYawRate = deltas(1); %in deg!
@@ -54,8 +54,8 @@ fileID = fopen([nameFile '.txt'], 'w');
 fprintf(fileID, '1\t50\tASO_LQR_K1\t%0.10f\t9\n', K_LQR(1));
 fprintf(fileID, '1\t50\tASO_LQR_K2\t%0.10f\t9\n', K_LQR(2));
 fprintf(fileID, '1\t50\tASO_LQR_K3\t%0.10f\t9\n', K_LQR(3));
-% 
-% %H vector
+
+%H vector
 fprintf(fileID, '1\t50\tASO_MPC_H1\t%0.10f\t9\n', H(1));
 fprintf(fileID, '1\t50\tASO_MPC_H2\t%0.10f\t9\n', H(2));
 fprintf(fileID, '1\t50\tASO_MPC_H3\t%0.10f\t9\n', H(3));
@@ -85,7 +85,14 @@ fprintf(fileID, '1\t50\tASO_DLT_RD_CM\t%0.10f\t9\n', deltaRudder);
 fprintf(fileID, '1\t50\tASO_SPL_LQR_US\t%d\t6\n', lqrSamplingTime);
 fprintf(fileID, '1\t50\tASO_SPL_MPC_US\t%d\t6\n', mpcSamplingTime);
 
-%TODO export model matrix A and B, for LQR and MPC ?!
+%export model matrix A and B, for the MPC
+fprintf(fileID, '1\t50\tASO_MPC_A11\t%0.10f\t9\n', mpcModel.A(1,1));
+fprintf(fileID, '1\t50\tASO_MPC_A12\t%0.10f\t9\n', mpcModel.A(1,2));
+fprintf(fileID, '1\t50\tASO_MPC_A21\t%0.10f\t9\n', mpcModel.A(2,1));
+fprintf(fileID, '1\t50\tASO_MPC_A22\t%0.10f\t9\n', mpcModel.A(2,2));
+
+fprintf(fileID, '1\t50\tASO_MPC_B1\t%0.10f\t9\n', mpcModel.B(1));
+fprintf(fileID, '1\t50\tASO_MPC_B2\t%0.10f\t9\n', mpcModel.B(2));
 
 fclose(fileID);
 
