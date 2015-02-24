@@ -120,7 +120,7 @@ function b_load_logs_Callback(hObject, eventdata, handles)
 
 %if only a file has been selected, convert file name to call type
 if(iscell(file_name) == 0)
-    file_name ={file_name};
+    file_name = {file_name};
 end
 
 errorInHeader = 0;
@@ -409,14 +409,14 @@ if(errorDesignModel == 0 && errorRealModel == 0)
     typeTack = get(handles.p_typeTack, 'Value');
     
     %debug
-    assignin('base', 'realModel', realModel);
-    assignin('base', 'lqrModel', lqrModel);
-    assignin('base', 'mpcModel', mpcModel);
-    assignin('base', 'predHor_steps', predHor_steps);
-    assignin('base', 'weights', weights);
-    assignin('base', 'deltas', deltas);
-    assignin('base', 'constraints', constraints);
-    assignin('base', 'typeTack', typeTack);
+%     assignin('base', 'realModel', realModel);
+%     assignin('base', 'lqrModel', lqrModel);
+%     assignin('base', 'mpcModel', mpcModel);
+%     assignin('base', 'predHor_steps', predHor_steps);
+%     assignin('base', 'weights', weights);
+%     assignin('base', 'deltas', deltas);
+%     assignin('base', 'constraints', constraints);
+%     assignin('base', 'typeTack', typeTack);
     %simulate MPC and LQR response
     sim_MpcVsLqr(realModel, lqrModel, mpcModel, predHor_steps, ...
                  weights, deltas, constraints, typeTack);

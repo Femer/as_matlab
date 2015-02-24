@@ -1,4 +1,4 @@
-function plotComparison(lqrData, mpcData, params, deltas, mpcParams)
+function plotComparison(lqrData, mpcData, params, deltas, mpcParams, predHor_steps, weights)
 
 figure;
 
@@ -9,7 +9,8 @@ yawIndex = 2;
 lastRudderIndex = 3;
 
 set(gcf,'name', ...
-    ['MPC (forces), steps prediction Horizon: '], ...
+    ['MPC (forces) vs LQR. Prediction Horizon: ' num2str(predHor_steps) ...
+    ' steps. Weights:' num2str(weights)], ...
     'numbertitle', 'off');
 
 %line width

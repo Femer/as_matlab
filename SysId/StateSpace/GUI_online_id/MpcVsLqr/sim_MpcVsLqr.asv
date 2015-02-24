@@ -2,7 +2,11 @@ function sim_MpcVsLqr(realModel, lqrModel, mpcModel, predHor_steps, ...
                       weights, deltas, constraints, typeTack)
 
 %mpc subfolders
-addpath();
+p = genpath('MpcVsLqr/mpc_boatTack_h10');
+addpath(p);
+
+p = genpath('MpcVsLqr/mpc_boatTack_h15');
+addpath(p);
 % Weights 
 qYawRate = weights(1);
 qYaw = weights(2);
@@ -30,7 +34,7 @@ end
 Q = blkdiag(qYawRate, qYaw, rU);
 R = sChattering;
 %build hessina matrix for MPC
-H = blkdiag(sChattering, qYawRate, qYaw, rU);
+H = [sChattering; qYawRate; qYaw; rU];
 
 %build extended state and extended model
 realExtMod = tool_extendModel(realModel);
@@ -45,13 +49,6 @@ mpcExtMod = tool_extendModel(mpcModel);
 %compute final cost of the MPC
 M = dare(mpcExtMod.A, mpcExtMod.B, Q, R);
 H_final = blkdiag(0, M);
-
-%based on predHor_steps value see which MPC solve has to be used
-mpcHandler = -1;
-if(predHor_steps == 10)
-    addpath('mpc_boatTack_h10');
-    mpcHandler =  @mpc_boatTack_h10;
-end
 
 %before starting the two simulations, load usefull paramters
 initParam = loadInitParams(realModel, typeTack);
@@ -69,6 +66,15 @@ lqrData = simController(K_LQR, indexLqrCtr,...
 
 %MPC 
 
+%which MPC horizon do we have?
+if(predHor_steps == 10)
+    mpcHandler = @mpc_boatTack_h10;
+elseif(predHor_steps == 15)
+    mpcHandler = @mpc_boatTack_h15;
+else
+    error('No valid MPC solver for this prediction horizon!');
+end
+
 %collect mpcParams
 mpcParams.Hessians = H;
 mpcParams.HessiansFinal = H_final;
@@ -83,9 +89,9 @@ mpcParams.D = [mpcExtMod.B, -eye(nx)];
 mpcData = simController(mpcHandler, indexMpcCtr,...
                        realExtMod, mpcExtMod, initParam, ...
                        mpcParams);
-                                                   
+          
 %plot comparison
-plotComparison(lqrData, mpcData, initParam, deltas);
+plotComparison(lqrData, mpcData, initParam, deltas, mpcParams, predHor_steps, weights);
 
 end
 
