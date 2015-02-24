@@ -378,13 +378,11 @@ if(error == 0)
     deltas = get(handles.t_deltas, 'Data');
     constraints = get(handles.t_constraints, 'Data');
     
-    %take the prediction horizon, in steps
-    contents = cellstr(get(handles.p_predHorizon,'String')); 
-    strPredHor = contents{get(handles.p_predHorizon,'Value')};
-    predHor_steps = str2double(strPredHor);
+    %take prediction horizon
+    pred_horiz_steps = get(handles.p_predHorizon, );
     
     tool_exportData(lqrModel, nameLqr, mpcModel, nameMpc, ...
-                    weights, deltas, constraints, predHor_steps);
+                    weights, deltas, constraints);
 
 end
 

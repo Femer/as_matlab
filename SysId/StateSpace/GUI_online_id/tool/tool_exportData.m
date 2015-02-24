@@ -1,5 +1,5 @@
 function  tool_exportData(lqrModel, nameLqr, mpcModel, nameMpc, ...
-                          weights, deltas, constraints)
+                          weights, deltas, constraints, predHor_steps)
 
 
 % Weights 
@@ -93,6 +93,9 @@ fprintf(fileID, '1\t50\tASO_MPC_A22\t%0.10f\t9\n', mpcModel.A(2,2));
 
 fprintf(fileID, '1\t50\tASO_MPC_B1\t%0.10f\t9\n', mpcModel.B(1));
 fprintf(fileID, '1\t50\tASO_MPC_B2\t%0.10f\t9\n', mpcModel.B(2));
+
+%steps for the prediction horizon
+fprintf(fileID, '1\t50\tASO_PRED_HOR\t%d\t6\n', predHor_steps);
 
 fclose(fileID);
 
