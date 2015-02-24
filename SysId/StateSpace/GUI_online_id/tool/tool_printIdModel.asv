@@ -24,8 +24,7 @@ set(handles.t_predHorizon, 'String', ...
     ['prediction horizon: ' num2str(predHor_s) ' [sec].']);
 
 %put the same model selected even for the MPC and LQR model
-set(handles.p_lqrModel, 'Value', indexModel);
-set(handles.p_mpcModel, 'Value', indexModel);
+set(handles.p_lqrModel, 'Value');
 
 end
 

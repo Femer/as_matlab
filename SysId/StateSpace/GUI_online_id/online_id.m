@@ -22,7 +22,7 @@ function varargout = online_id(varargin)
 
 % Edit the above text to modify the response to help online_id
 
-% Last Modified by GUIDE v2.5 23-Feb-2015 15:55:44
+% Last Modified by GUIDE v2.5 24-Feb-2015 12:33:13
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -246,15 +246,14 @@ end
 % --- Executes on selection change in p_idModels.
 function p_idModels_Callback(hObject, eventdata, handles)
 
-contents = cellstr(get(hObject,'String')); 
-nameModel = contents{get(hObject,'Value')};
+%get selected id model
+[error, modelSelected, indexModel] = tool_getSelectedIdModel(handles);
 
-%if nameModel ~= identified models
-if(strcmp(nameModel, 'identified models') ~= 1)
-    %take the model
-    eval(['modelSelected = handles.idModels.' nameModel ';']);
-    %print the model selected in the text box
-    tool_printIdModel(handles, modelSelected);
+%check error
+if(error == 0)
+    %print the model selected in the text box and put the same model
+    % in the MPC and LQR model
+    tool_printIdModel(handles, modelSelected, indexModel);
 end
 
 
@@ -277,7 +276,7 @@ function b_validate_Callback(hObject, eventdata, handles)
 contents = cellstr(get(handles.p_logList,'String')); %returns p_logList contents as cell array
 selectedLog = contents{get(handles.p_logList,'Value')}; %returns selected item from p_logList
 %see which model has been selected
-[error, modelSelected] = tool_getSelectedIdModel(handles);
+[error, modelSelected, ~] = tool_getSelectedIdModel(handles);
 
 %check if any error
 if(error == 0)
@@ -408,6 +407,8 @@ if(errorDesignModel == 0 && errorRealModel == 0)
     %which type of tack should we make?
     typeTack = get(handles.p_typeTack, 'Value');
     
+    %do we have to add noise in the simulation?
+    addNoise = get(handles.c_addNoise, 'Value');
     %debug
 %     assignin('base', 'realModel', realModel);
 %     assignin('base', 'lqrModel', lqrModel);
@@ -419,14 +420,14 @@ if(errorDesignModel == 0 && errorRealModel == 0)
 %     assignin('base', 'typeTack', typeTack);
     %simulate MPC and LQR response
     sim_MpcVsLqr(realModel, lqrModel, mpcModel, predHor_steps, ...
-                 weights, deltas, constraints, typeTack);
+                 weights, deltas, constraints, typeTack, addNoise);
 end
 
 
 % --- Executes on selection change in p_predHorizon.
 function p_predHorizon_Callback(hObject, eventdata, handles)
 %take the selected identified model
-[error, modelSelected] = tool_getSelectedIdModel(handles);
+[error, modelSelected, ~] = tool_getSelectedIdModel(handles);
 
 %check error
 if(error == 0)
@@ -552,3 +553,12 @@ function p_mpcModel_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --- Executes on button press in c_addNoise.
+function c_addNoise_Callback(hObject, eventdata, handles)
+% hObject    handle to c_addNoise (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of c_addNoise

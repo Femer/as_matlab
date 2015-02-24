@@ -1,6 +1,6 @@
 function dataOut = simController(controller, typeController,...
                                  realModel, controllerModel, params, ...
-                                 mpcParams)
+                                 mpcParams, addNoise)
 
 %usefull index
 yawRateIndex = 1;
@@ -68,12 +68,18 @@ for k = 1 : params.N - 1
        %now we read the corrupted measurements
        meas_k = xHatSim(:, k) + params.measNoise(:, k);
        
-       %update step to predict the real state
-       xEst_k_k = kfUpdate(controllerModel, K_k, meas_k, u_k1, xHatEst_k1_k1);
+       %check if we have to use the estiamted state or the real one
+       if(addNoise == 1)
+           %update step to predict the real state
+           xEst_k_k = kfUpdate(controllerModel, K_k, meas_k, u_k1, xHatEst_k1_k1);
        
-       %Sinche the real rudder does not affect the state of the real boat,
-       %here we use the real rudder command without noise on it
-       xEst_k_k(3) = xHatSim(3, k);
+           %since the real rudder does not affect the state of the real boat,
+           %here we use the real rudder command without noise on it
+           xEst_k_k(3) = xHatSim(3, k);
+       else
+           %use real state
+           xEst_k_k = xHatSim(:, k);
+       end
        
        %save predicted step for later plots
        xHatEst(:, count) = xEst_k_k;

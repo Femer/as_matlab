@@ -1,11 +1,20 @@
 function sim_MpcVsLqr(realModel, lqrModel, mpcModel, predHor_steps, ...
-                      weights, deltas, constraints, typeTack)
+                      weights, deltas, constraints, typeTack, addNoise)
 
 %mpc subfolders
 p = genpath('MpcVsLqr/mpc_boatTack_h10');
 addpath(p);
 
 p = genpath('MpcVsLqr/mpc_boatTack_h15');
+addpath(p);
+
+p = genpath('MpcVsLqr/mpc_boatTack_h20');
+addpath(p);
+
+p = genpath('MpcVsLqr/mpc_boatTack_h25');
+addpath(p);
+
+p = genpath('MpcVsLqr/mpc_boatTack_h30');
 addpath(p);
 % Weights 
 qYawRate = weights(1);
@@ -62,7 +71,7 @@ indexLqrCtr = 2;
 %LQR, no mpcParams
 lqrData = simController(K_LQR, indexLqrCtr,...
                         realExtMod, lqrExtMod, initParam, ...
-                        []);
+                        [], addNoise);
 
 %MPC 
 
@@ -71,6 +80,12 @@ if(predHor_steps == 10)
     mpcHandler = @mpc_boatTack_h10;
 elseif(predHor_steps == 15)
     mpcHandler = @mpc_boatTack_h15;
+elseif(predHor_steps == 20)
+    mpcHandler = @mpc_boatTack_h20;
+elseif(predHor_steps == 25)
+    mpcHandler = @mpc_boatTack_h25;
+elseif(predHor_steps == 30)
+    mpcHandler = @mpc_boatTack_h30;
 else
     error('No valid MPC solver for this prediction horizon!');
 end
@@ -88,10 +103,11 @@ mpcParams.D = [mpcExtMod.B, -eye(nx)];
 
 mpcData = simController(mpcHandler, indexMpcCtr,...
                        realExtMod, mpcExtMod, initParam, ...
-                       mpcParams);
+                       mpcParams, addNoise);
           
 %plot comparison
-plotComparison(lqrData, mpcData, initParam, deltas, mpcParams, predHor_steps, weights);
+plotComparison(lqrData, mpcData, initParam, deltas, ...
+               mpcParams, predHor_steps, weights, addNoise, mpcModel.Dt);
 
 end
 
