@@ -418,8 +418,8 @@ if(errorDesignModel == 0 && errorRealModel == 0)
     assignin('base', 'constraints', constraints);
     assignin('base', 'typeTack', typeTack);
     %simulate MPC and LQR response
-%     sim_MpcVsLqr(realModel, lqrModel, mpcModel, predHor_steps, ...
-%                  weights, deltas, constraints, typeTack);
+    sim_MpcVsLqr(realModel, lqrModel, mpcModel, predHor_steps, ...
+                 weights, deltas, constraints, typeTack);
 end
 
 

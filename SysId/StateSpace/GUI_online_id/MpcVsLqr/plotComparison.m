@@ -1,4 +1,4 @@
-function plotComparison(lqrData, mpcData, params, deltas)
+function plotComparison(lqrData, mpcData, params, deltas, mpcParams)
 
 figure;
 
@@ -23,8 +23,7 @@ leg = { {'w real MPC', 'w by KF'}, ...
         'rud MPC',...
         'rud LQR'};
 
-
-
+%real yaw and yawRate
 yawReal = [mpcData.xHatSim(yawIndex, :);
           lqrData.xHatSim(yawIndex, :)];
 
@@ -35,16 +34,20 @@ yawRateReal = [mpcData.xHatSim(yawRateIndex, :);
 rudder{1} = mpcData.rudCmd;
 rudder{2} = lqrData.rudCmd;
 
+rudderLimit(1) = mpcParams.upperBound(2);
+rudderLimit(2) = params.rudderMax;
+
 controllerTimeStr{1} = mpcData.time;
 controllerTimeStr{2} = lqrData.time;
 
 %state estimated by the time varying Kalman filter
-yawEstVector = [mpcData.xHatEst(yawIndex,:);
-                lqrData.xHatEst(yawIndex,:)];
+%take data from index 2 since at index1 the tack was not started yet
+yawEstVector = [mpcData.xHatEst(yawIndex,2:end);
+                lqrData.xHatEst(yawIndex,2:end)];
 
 %state estimated by the time vayring Kalman filter
-yawRateEstVector = [mpcData.xHatEst(yawRateIndex,:);
-                    lqrData.xHatEst(yawRateIndex,:)];
+yawRateEstVector = [mpcData.xHatEst(yawRateIndex,2:end);
+                    lqrData.xHatEst(yawRateIndex,2:end)];
 %full simulation time vector
 time = (0: params.N - 1) * params.realModelDt;
 
@@ -54,12 +57,12 @@ for i = 1 : 2
     controllerTime = controllerTimeStr{i} * params.realModelDt;
     
     h1 = subplot(3, 2, index);
-        
+            
     plot(time, yawRateReal(i, :) .* 180 / pi, ...
         'LineWidth', 1.9, 'Color', [88 25 225] ./ 255);
     hold on;
     
-    plot(controllerTime, yawRateEstVector(i, :) .* 180 / pi, 'c-.', ...
+    plot(controllerTime(2:end), yawRateEstVector(i, :) .* 180 / pi, 'c-.', ...
         'LineWidth', 1.9, 'Color', [245 86 1] ./ 255);
     
     plot([controllerTime(1) controllerTime(end)], [deltas(1) deltas(1)], 'c--', 'LineWidth', 1.9);
@@ -73,13 +76,13 @@ for i = 1 : 2
     
     
     index = index + 2;
-    
+        
     h2 = subplot(3, 2, index);
     plot(time, yawReal(i, :) .* 180 / pi, ...
         'LineWidth', 1.9, 'Color', [88 25 225] ./ 255);
     hold on;
     
-    plot(controllerTime, yawEstVector(i, :) .* 180 / pi, 'c-.', ...
+    plot(controllerTime(2:end), yawEstVector(i, :) .* 180 / pi, 'c-.', ...
         'LineWidth', 1.9, 'Color', [245 86 1] ./ 255);
     
     plot([controllerTime(1) controllerTime(end)], [deltas(2) deltas(2)], 'c--', 'LineWidth', 1.9);
@@ -95,13 +98,13 @@ for i = 1 : 2
     index = index + 2;
     
     h3 = subplot(3, 2, index);
-    
+        
     plot(controllerTime, rudder{i}, 'm--*', 'LineWidth', 1.4);
     hold on;
     plot([controllerTime(1) controllerTime(end)], ...
-         [params.rudderMax params.rudderMax], 'r-.', 'LineWidth', lW0);
+         [rudderLimit(i) rudderLimit(i)], 'r-.', 'LineWidth', lW0);
     plot([controllerTime(1) controllerTime(end)], ...
-         [-params.rudderMax -params.rudderMax], 'r-.', 'LineWidth', lW0);
+         [-rudderLimit(i) -rudderLimit(i)], 'r-.', 'LineWidth', lW0);
     
     plot([controllerTime(1) controllerTime(end)], [deltas(3) deltas(3)], 'c--', 'LineWidth', 1.9);
     plot([controllerTime(1) controllerTime(end)], -[deltas(3)  deltas(3)], 'c--', 'LineWidth', 1.9);
@@ -114,7 +117,7 @@ for i = 1 : 2
     
     linkaxes([h1, h2, h3], 'x');
     
-    %set(h3, 'XLim', [controllerTime(1), controllerTime(end)]);
+    set(h3, 'XLim', [controllerTime(1), controllerTime(end)]);
 end
 
 

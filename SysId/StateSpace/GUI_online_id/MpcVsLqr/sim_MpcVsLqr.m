@@ -63,6 +63,13 @@ lqrData = simController(K_LQR, indexLqrCtr,...
 
 %MPC 
 
+%which MPC horizon do we have?
+if(predHor_steps == 10)
+    mpcHandler = @mpc_boatTack_h10;
+else
+    error('No valid MPC solver for this prediction horizon!');
+end
+
 %collect mpcParams
 mpcParams.Hessians = H;
 mpcParams.HessiansFinal = H_final;
@@ -74,7 +81,7 @@ mpcParams.C = [zeros(nx, nu), mpcExtMod.A];
 mpcParams.D = [mpcExtMod.B, -eye(nx)];
 
 
-mpcData = simController(predHor_steps, indexMpcCtr,...
+mpcData = simController(mpcHandler, indexMpcCtr,...
                        realExtMod, mpcExtMod, initParam, ...
                        mpcParams);
           
@@ -83,7 +90,7 @@ assignin('base', 'lqrData', lqrData);
 assignin('base', 'mpcData', mpcData);
 
 %plot comparison
-plotComparison(lqrData, mpcData, initParam, deltas);
+plotComparison(lqrData, mpcData, initParam, deltas, mpcParams);
 
 end
 

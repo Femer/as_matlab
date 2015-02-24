@@ -7,13 +7,13 @@ tF = 10;
 %gaussian noise on measurements
 varYawRate = 10 * pi / 180;
 varYaw = 2 * pi / 180;
-varRudder = 0.01;
+varRudder = 0.001;
 
 %covariance matrices for Kalman filter
 noiseModel = 0.0005;
 
 %covariance matrix P{k-1}
-noiseP11 = 1;
+noiseP11 = 0.5;
 
 %rudder value before starting the tack
 rudderBeforeTack = 0; %between -1 and 1
@@ -51,14 +51,17 @@ initParam.measNoise = [sqrt(varYawRate) * randn(1, initParam.N);
                        sqrt(varYaw) * randn(1, initParam.N);
                        sqrt(varRudder) * randn(1, initParam.N)];
 
+initParam.varYawRate = varYawRate;
+initParam.varYaw = varYaw;
+initParam.varRudder = varRudder;
 
 %guess on the initial state of the KF
-initParam.guessX1Hat = [  0 + sqrt(varYawRate) * randn();
-                          yaw0 +  sqrt(varYaw) * randn();
-                          rudderBeforeTack +  sqrt(varRudder) * randn()];
+% initParam.guessX1Hat = [  0 + sqrt(varYawRate) * randn();
+%                           yaw0 +  sqrt(varYaw) * randn();
+%                           rudderBeforeTack +  sqrt(varRudder) * randn()];
 
 %guess on the variance matrix of the KF
-initParam.guessP1_1 = noiseP11 * blkdiag(eye(2), 0);
+initParam.guessP1_1 = noiseP11 * eye(3);
 
 %start of the realModel used to simulate the boat in the C.L. MPC
 initParam.xHatReal0 = [ 0;
