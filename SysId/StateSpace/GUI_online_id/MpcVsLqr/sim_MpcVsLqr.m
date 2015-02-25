@@ -108,6 +108,8 @@ mpcData = simController(mpcHandler, indexMpcCtr,...
 %plot comparison
 plotComparison(lqrData, mpcData, initParam, deltas, ...
                mpcParams, predHor_steps, weights, addNoise, mpcModel.Dt);
-
+%debug file for the pixhaek
+printCDebugcode(mpcModel, mpcData, deltas, ...
+                mpcParams, predHor_steps);
 end
 

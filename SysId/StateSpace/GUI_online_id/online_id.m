@@ -56,8 +56,8 @@ function online_id_OpeningFcn(hObject, eventdata, handles, varargin)
 handles.output = hObject;
 
 %default values for weights, deltas and constraints
-weights = [1, 3, 1, 20]; 
-deltas = [10, 10, 0.1]; 
+weights = [1, 3, 1, 35]; 
+deltas = [10, 10, 0.15]; 
 constraints = [1, 3.6];
 set(handles.t_weights, 'Data', weights);
 set(handles.t_deltas, 'Data', deltas);

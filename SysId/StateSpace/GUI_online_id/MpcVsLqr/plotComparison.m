@@ -2,6 +2,7 @@ function plotComparison(lqrData, mpcData, params, deltas, ...
                         mpcParams, predHor_steps, weights, ...
                         addNoise, mpcModelDt)
 
+
 figure;
 
 %usefull index
