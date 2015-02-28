@@ -56,8 +56,8 @@ function online_id_OpeningFcn(hObject, eventdata, handles, varargin)
 handles.output = hObject;
 
 %default values for weights, deltas and constraints
-weights = [1, 3, 1, 20]; 
-deltas = [10, 10, 0.1]; 
+weights = [1, 3, 1, 35]; 
+deltas = [10, 10, 0.15]; 
 constraints = [1, 3.6];
 set(handles.t_weights, 'Data', weights);
 set(handles.t_deltas, 'Data', deltas);
@@ -76,9 +76,10 @@ addpath('tool');
 addpath('MpcVsLqr');
 
 %debug
+% path_name = ...
+% 'C:\Users\IFA_sailing\Documents\FirmawareMarco\Matlab\as_matlab\SysId\StateSpace\GUI_online_id\';
 path_name = ...
-'C:\Users\IFA_sailing\Documents\FirmawareMarco\Matlab\as_matlab\SysId\StateSpace\GUI_online_id\';
-
+    'C:\Users\femer_000\Desktop\Tesi\mioCodice\Matlab\as_matlab\SysId\StateSpace\GUI_online_id';
 [~, logStr, logName] = tool_loadTxtLog('tack8_21_01_2015.txt', path_name);
 eval(['handles.logs.' logName ' = logStr;']);
 guidata(hObject, handles);
@@ -190,7 +191,8 @@ resamplingTime = str2double(get(handles.e_newSampling, 'String'));
 
 if(strcmp(selectedLog, 'log list') ~= 1)
     %call ginput to allow the user selecting starting and ending of Id data
-    [timeSelected, ~] = ginput(2);
+    %[timeSelected, ~] = ginput(2);
+    [timeSelected, ~] = ginputc(2, 'Color', 'r', 'LineWidth', 3, 'LineStyle', );
     
     %identify model, if possibile
     eval(['logStr = handles.logs.' selectedLog ';']);    
@@ -378,11 +380,13 @@ if(error == 0)
     deltas = get(handles.t_deltas, 'Data');
     constraints = get(handles.t_constraints, 'Data');
     
-    %take prediction horizon
-    pred_horiz_steps = get(handles.p_predHorizon, );
+    %take the prediction horizon, in steps
+    contents = cellstr(get(handles.p_predHorizon,'String')); 
+    strPredHor = contents{get(handles.p_predHorizon,'Value')};
+    predHor_steps = str2double(strPredHor);
     
     tool_exportData(lqrModel, nameLqr, mpcModel, nameMpc, ...
-                    weights, deltas, constraints);
+                    weights, deltas, constraints, predHor_steps);
 
 end
 

@@ -191,7 +191,8 @@ resamplingTime = str2double(get(handles.e_newSampling, 'String'));
 
 if(strcmp(selectedLog, 'log list') ~= 1)
     %call ginput to allow the user selecting starting and ending of Id data
-    [timeSelected, ~] = ginput(2);
+    %[timeSelected, ~] = ginput(2);
+    [timeSelected, ~] = ginputc(2, 'Color', 'r', 'LineWidth', 2);
     
     %identify model, if possibile
     eval(['logStr = handles.logs.' selectedLog ';']);    

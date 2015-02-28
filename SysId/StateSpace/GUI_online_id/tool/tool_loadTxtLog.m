@@ -51,6 +51,8 @@ if ~isequal(file_name, 0) %if valid files has been selected
         else
             %everything ok
             errorInHeader = 0;
+            %remove rows with nan value, if any
+            rows = tool_removeNan(rows);
             logStr.time = rows{timeIndex};
             logStr.yawRate = rows{yawRateIndex};
             %UNWRAP yaw angle!
