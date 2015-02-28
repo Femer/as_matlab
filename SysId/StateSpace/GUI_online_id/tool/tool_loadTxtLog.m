@@ -23,7 +23,7 @@ if ~isequal(file_name, 0) %if valid files has been selected
         errorInHeader = 1;
     else
         %use reg exp
-        neededField = {'TIME', 'yawspeed$', 'yaw$', 'Rud$'};
+        neededField = {'TIME', 'yawspeed$', 'yaw$', 'asrud$'};
         for i = 1 : length(header)
             for j = 1 : length(neededField)
                 resRegExp = regexp(header{i}, neededField{j});
