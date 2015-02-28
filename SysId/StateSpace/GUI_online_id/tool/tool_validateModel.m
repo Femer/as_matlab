@@ -44,19 +44,6 @@ tModel = tModel ./ 1e3;
 
 lW = 1.7;
 
-%debug
-assignin('base', 'model', model);
-assignin('base', 'dataValidation', dataId);
-assignin('base', 'samplingStep', samplingStep);
-
-assignin('base', 'tModel', tModel);
-assignin('base', 'yModel', yModel);
-assignin('base', 'wModel', wModel);
-
-assignin('base', 'time_sec', time_sec);
-assignin('base', 'yawRate',  validationLog.yawRate);
-assignin('base', 'yaw',  validationLog.yaw);
-
 %plot yawRate in deg/s
 plot(handles.a_yawRate, time_sec, validationLog.yawRate .* 180 / pi, ...
     'b--*', 'LineWidth', lW);

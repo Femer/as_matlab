@@ -1,6 +1,7 @@
-function [error, logStr] = tool_getSelectedLog(handles)
+function [error, logStr, nameLog] = tool_getSelectedLog(handles)
 
 logStr = [];
+nameLog = [];
 %take the selected log and use it as validation data
 contents = cellstr(get(handles.p_logList,'String')); %returns p_logList contents as cell array
 indexPopUp = get(handles.p_logList,'Value');
@@ -12,6 +13,7 @@ if(indexPopUp == 1)
     error = 1;
 else
     eval(['logStr = handles.logs.' selectedLog ';']);
+    nameLog = selectedLog;
     %everything ok
     error = 0;
 end

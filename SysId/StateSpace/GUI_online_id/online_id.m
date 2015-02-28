@@ -22,7 +22,7 @@ function varargout = online_id(varargin)
 
 % Edit the above text to modify the response to help online_id
 
-% Last Modified by GUIDE v2.5 28-Feb-2015 16:04:14
+% Last Modified by GUIDE v2.5 28-Feb-2015 16:46:40
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -138,8 +138,6 @@ for i = 1 : length(file_name)
         eval(['handles.logs.' logName ' = logStr;']);
         %update log list
         tool_updateLogList(handles);
-        %debug
-        assignin('base', 'h', handles);
     end
 end
 
@@ -204,8 +202,6 @@ if(strcmp(selectedLog, 'log list') ~= 1)
          selectedLog modelType{selectedModel} '_sampFact' num2str(resamplingTime) ...
          ' = model;']);
     guidata(hObject, handles);
-    %debug
-    assignin('base', 'h', handles);
     %update idModel list
     tool_updateModelList(handles);
 else
@@ -577,4 +573,95 @@ function b_plotPSD_Callback(hObject, eventdata, handles)
 
 if(error == 0)
     tool_plotPSD(logStr);
+end
+
+
+
+function e_cutOffFreq_Callback(hObject, eventdata, handles)
+% hObject    handle to e_cutOffFreq (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+cutOffFreq = str2double(get(hObject, 'String'));
+
+%make sure cutOffFreq is > 0
+if(isnan(cutOffFreq))
+    msgbox('Please insert a number', 'Error','error');
+    set(hObject, 'String', '0.5');
+elseif(cutOffFreq < 0)
+    msgbox('Please insert a number > 0', 'Error','error');
+    set(hObject, 'String', '0.5');
+end
+
+
+% --- Executes during object creation, after setting all properties.
+function e_cutOffFreq_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to e_cutOffFreq (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function e_orderFilt_Callback(hObject, eventdata, handles)
+% hObject    handle to e_orderFilt (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+filterOrder = str2double(get(hObject, 'String'));
+
+%make sure filterOrder is an integer number >= 1 
+if(isnan(filterOrder))
+    msgbox('Please insert a number', 'Error','error');
+    set(hObject, 'String', '10');
+elseif(filterOrder < 1)
+    msgbox('Please insert a number >= 1', 'Error','error');
+    set(hObject, 'String', '10');
+else
+    %force filterOrder to be an integer
+    set(hObject, 'String', num2str(round(filterOrder)));
+end
+
+
+% --- Executes during object creation, after setting all properties.
+function e_orderFilt_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to e_orderFilt (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in b_filt.
+function b_filt_Callback(hObject, eventdata, handles)
+%filtfilt yawRate and yaw
+[error, filtFiltLog, ~] = tool_filtFiltLogStr(handles);
+
+%check error
+if(error == 0)
+    %plot original log Vs filtfilt one
+    tool_plotFiltFiltLog(handles, filtFiltLog);
+end
+
+
+
+% --- Executes on button press in b_addToLog.
+function b_addToLog_Callback(hObject, eventdata, handles)
+%filtfilt yawRate and yaw
+[error, filtFiltLog, nameFiltFilt] = tool_filtFiltLogStr(handles);
+
+%check error
+if(error == 0)
+    %add filt filt log to log list
+    eval(['handles.logs.' nameFiltFilt ' = filtFiltLog;']);
+    guidata(hObject, handles);
+    %update log list
+    tool_updateLogList(handles);
 end
