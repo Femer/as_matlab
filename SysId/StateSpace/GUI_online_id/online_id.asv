@@ -22,7 +22,7 @@ function varargout = online_id(varargin)
 
 % Edit the above text to modify the response to help online_id
 
-% Last Modified by GUIDE v2.5 24-Feb-2015 12:33:13
+% Last Modified by GUIDE v2.5 28-Feb-2015 16:04:14
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -192,7 +192,7 @@ resamplingTime = str2double(get(handles.e_newSampling, 'String'));
 if(strcmp(selectedLog, 'log list') ~= 1)
     %call ginput to allow the user selecting starting and ending of Id data
     %[timeSelected, ~] = ginput(2);
-    [timeSelected, ~] = ginputc(2, 'Color', 'r', 'LineWidth', 3, 'LineStyle', );
+    [timeSelected, ~] = ginputc(2, 'Color', 'r', 'LineWidth', 2);
     
     %identify model, if possibile
     eval(['logStr = handles.logs.' selectedLog ';']);    
@@ -569,3 +569,8 @@ function c_addNoise_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of c_addNoise
+
+
+% --- Executes on button press in b_plotPSD.
+function b_plotPSD_Callback(hObject, eventdata, handles)
+
