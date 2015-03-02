@@ -30,13 +30,13 @@ if ~isequal(file_name, 0) %if valid files has been selected
                 if(~isempty(resRegExp{1}))
                     %found a needed field in header{i}
                     if(j == 1)
-                        timeIndex = j;
+                        timeIndex = i;
                     elseif(j == 2)
-                        yawRateIndex = j;
+                        yawRateIndex = i;
                     elseif(j == 3)
-                        yawIndex = j;
+                        yawIndex = i;
                     elseif(j == 4)
-                        rudderIndex = j;
+                        rudderIndex = i;
                     end
                 end
             end
