@@ -76,10 +76,10 @@ addpath('tool');
 addpath('MpcVsLqr');
 
 %debug
-% path_name = ...
-% 'C:\Users\IFA_sailing\Documents\FirmawareMarco\Matlab\as_matlab\SysId\StateSpace\GUI_online_id\';
 path_name = ...
-    'C:\Users\femer_000\Desktop\Tesi\mioCodice\Matlab\as_matlab\SysId\StateSpace\GUI_online_id';
+'C:\Users\IFA_sailing\Documents\FirmawareMarco\Matlab\as_matlab\SysId\StateSpace\GUI_online_id\exampleLogs';
+% path_name = ...
+%     'C:\Users\femer_000\Desktop\Tesi\mioCodice\Matlab\as_matlab\SysId\StateSpace\GUI_online_id';
 [~, logStr, logName] = tool_loadTxtLog('tack8_21_01_2015.txt', path_name);
 eval(['handles.logs.' logName ' = logStr;']);
 guidata(hObject, handles);
@@ -88,7 +88,7 @@ guidata(hObject, handles);
 eval(['handles.logs.' logName ' = logStr;']);
 guidata(hObject, handles);
 
-[~, logStr, logName] = tool_loadTxtLog('data4_10_02_2015.txt', path_name);
+[~, logStr, logName] = tool_loadTxtLog('cross18_18_02_2015.txt', path_name);
 eval(['handles.logs.' logName ' = logStr;']);
 guidata(hObject, handles);
 
