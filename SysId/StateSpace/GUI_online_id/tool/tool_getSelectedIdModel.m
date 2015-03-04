@@ -1,4 +1,4 @@
-function [error, modelSelected, indexModel] = tool_getSelectedIdModel(handles)
+function [error, modelSelected, indexModel, nameModel] = tool_getSelectedIdModel(handles)
 
 modelSelected = [];
 %see which model has been selected

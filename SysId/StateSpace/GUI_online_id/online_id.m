@@ -22,7 +22,7 @@ function varargout = online_id(varargin)
 
 % Edit the above text to modify the response to help online_id
 
-% Last Modified by GUIDE v2.5 28-Feb-2015 16:46:40
+% Last Modified by GUIDE v2.5 04-Mar-2015 09:31:31
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -55,6 +55,12 @@ function online_id_OpeningFcn(hObject, eventdata, handles, varargin)
 % Choose default command line output for online_id
 handles.output = hObject;
 
+%add tool folder to the path
+addpath('tool');
+
+%add MpcVsLqr folder to the path
+addpath('MpcVsLqr');
+
 %default values for weights, deltas and constraints
 weights = [1, 3, 1, 35]; 
 deltas = [10, 10, 0.15]; 
@@ -63,36 +69,34 @@ set(handles.t_weights, 'Data', weights);
 set(handles.t_deltas, 'Data', deltas);
 set(handles.t_constraints, 'Data', constraints);
 
+%load default identified models
+handles.idModels = tool_loadDefaultModels();
+tool_updateModelList(handles);
+
 % Update handles structure
 guidata(hObject, handles);
 
-%clc
+%clean
 clc;
 
-%add tool folder to the path
-addpath('tool');
-
-%add MpcVsLqr folder to the path
-addpath('MpcVsLqr');
-
-%debug
-path_name = ...
-'C:\Users\IFA_sailing\Documents\FirmawareMarco\Matlab\as_matlab\SysId\StateSpace\GUI_online_id\exampleLogs';
+% %debug
 % path_name = ...
-%     'C:\Users\femer_000\Desktop\Tesi\mioCodice\Matlab\as_matlab\SysId\StateSpace\GUI_online_id';
-[~, logStr, logName] = tool_loadTxtLog('tack8_21_01_2015.txt', path_name);
-eval(['handles.logs.' logName ' = logStr;']);
-guidata(hObject, handles);
-
-[~, logStr, logName] = tool_loadTxtLog('tack5B_21_01_2015.txt', path_name);
-eval(['handles.logs.' logName ' = logStr;']);
-guidata(hObject, handles);
-
-[~, logStr, logName] = tool_loadTxtLog('cross18_18_02_2015.txt', path_name);
-eval(['handles.logs.' logName ' = logStr;']);
-guidata(hObject, handles);
-
-tool_updateLogList(handles);
+% 'C:\Users\IFA_sailing\Documents\FirmawareMarco\Matlab\as_matlab\SysId\StateSpace\GUI_online_id\exampleLogs';
+% % path_name = ...
+% %     'C:\Users\femer_000\Desktop\Tesi\mioCodice\Matlab\as_matlab\SysId\StateSpace\GUI_online_id';
+% [~, logStr, logName] = tool_loadTxtLog('tack8_21_01_2015.txt', path_name);
+% eval(['handles.logs.' logName ' = logStr;']);
+% guidata(hObject, handles);
+% 
+% [~, logStr, logName] = tool_loadTxtLog('tack5B_21_01_2015.txt', path_name);
+% eval(['handles.logs.' logName ' = logStr;']);
+% guidata(hObject, handles);
+% 
+% [~, logStr, logName] = tool_loadTxtLog('cross6_18_02_2015.txt', path_name);
+% eval(['handles.logs.' logName ' = logStr;']);
+% guidata(hObject, handles);
+% 
+% tool_updateLogList(handles);
 
 % UIWAIT makes online_id wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
@@ -664,4 +668,15 @@ if(error == 0)
     guidata(hObject, handles);
     %update log list
     tool_updateLogList(handles);
+end
+
+
+% --- Executes on button press in b_exportToWork.
+function b_exportToWork_Callback(hObject, eventdata, handles)
+[error, modelSelected, ~, modelName] = tool_getSelectedIdModel(handles);
+
+%check error
+if(error == 0)
+    %save into workspace
+    eval(['assignin(''base'', ''' modelName ''', modelSelected);']);
 end

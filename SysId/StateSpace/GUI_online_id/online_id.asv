@@ -22,7 +22,7 @@ function varargout = online_id(varargin)
 
 % Edit the above text to modify the response to help online_id
 
-% Last Modified by GUIDE v2.5 28-Feb-2015 16:46:40
+% Last Modified by GUIDE v2.5 04-Mar-2015 09:31:31
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -55,6 +55,12 @@ function online_id_OpeningFcn(hObject, eventdata, handles, varargin)
 % Choose default command line output for online_id
 handles.output = hObject;
 
+%add tool folder to the path
+addpath('tool');
+
+%add MpcVsLqr folder to the path
+addpath('MpcVsLqr');
+
 %default values for weights, deltas and constraints
 weights = [1, 3, 1, 35]; 
 deltas = [10, 10, 0.15]; 
@@ -63,23 +69,21 @@ set(handles.t_weights, 'Data', weights);
 set(handles.t_deltas, 'Data', deltas);
 set(handles.t_constraints, 'Data', constraints);
 
+%load default identified models
+handles.idModels = tool_loadDefaultModels();
+tool_updateModelList(handles);
+
 % Update handles structure
 guidata(hObject, handles);
 
-%clc
+%clean
 clc;
 
-%add tool folder to the path
-addpath('tool');
-
-%add MpcVsLqr folder to the path
-addpath('MpcVsLqr');
-
 %debug
-% path_name = ...
-% 'C:\Users\IFA_sailing\Documents\FirmawareMarco\Matlab\as_matlab\SysId\StateSpace\GUI_online_id\';
 path_name = ...
-    'C:\Users\femer_000\Desktop\Tesi\mioCodice\Matlab\as_matlab\SysId\StateSpace\GUI_online_id';
+'C:\Users\IFA_sailing\Documents\FirmawareMarco\Matlab\as_matlab\SysId\StateSpace\GUI_online_id\exampleLogs';
+% path_name = ...
+%     'C:\Users\femer_000\Desktop\Tesi\mioCodice\Matlab\as_matlab\SysId\StateSpace\GUI_online_id';
 [~, logStr, logName] = tool_loadTxtLog('tack8_21_01_2015.txt', path_name);
 eval(['handles.logs.' logName ' = logStr;']);
 guidata(hObject, handles);
@@ -88,7 +92,7 @@ guidata(hObject, handles);
 eval(['handles.logs.' logName ' = logStr;']);
 guidata(hObject, handles);
 
-[~, logStr, logName] = tool_loadTxtLog('data4_10_02_2015.txt', path_name);
+[~, logStr, logName] = tool_loadTxtLog('cross6_18_02_2015.txt', path_name);
 eval(['handles.logs.' logName ' = logStr;']);
 guidata(hObject, handles);
 
@@ -138,8 +142,6 @@ for i = 1 : length(file_name)
         eval(['handles.logs.' logName ' = logStr;']);
         %update log list
         tool_updateLogList(handles);
-        %debug
-        assignin('base', 'h', handles);
     end
 end
 
@@ -204,8 +206,6 @@ if(strcmp(selectedLog, 'log list') ~= 1)
          selectedLog modelType{selectedModel} '_sampFact' num2str(resamplingTime) ...
          ' = model;']);
     guidata(hObject, handles);
-    %debug
-    assignin('base', 'h', handles);
     %update idModel list
     tool_updateModelList(handles);
 else
@@ -594,9 +594,6 @@ if(isnan(cutOffFreq))
 elseif(cutOffFreq < 0)
     msgbox('Please insert a number > 0', 'Error','error');
     set(hObject, 'String', '0.5');
-else
-    %force samplingFactor to be an integer
-    set(hObject, 'String', num2str(round(cutOffFreq)));
 end
 
 
@@ -618,9 +615,19 @@ function e_orderFilt_Callback(hObject, eventdata, handles)
 % hObject    handle to e_orderFilt (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+filterOrder = str2double(get(hObject, 'String'));
 
-% Hints: get(hObject,'String') returns contents of e_orderFilt as text
-%        str2double(get(hObject,'String')) returns contents of e_orderFilt as a double
+%make sure filterOrder is an integer number >= 1 
+if(isnan(filterOrder))
+    msgbox('Please insert a number', 'Error','error');
+    set(hObject, 'String', '10');
+elseif(filterOrder < 1)
+    msgbox('Please insert a number >= 1', 'Error','error');
+    set(hObject, 'String', '10');
+else
+    %force filterOrder to be an integer
+    set(hObject, 'String', num2str(round(filterOrder)));
+end
 
 
 % --- Executes during object creation, after setting all properties.
@@ -638,13 +645,38 @@ end
 
 % --- Executes on button press in b_filt.
 function b_filt_Callback(hObject, eventdata, handles)
-% hObject    handle to b_filt (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+%filtfilt yawRate and yaw
+[error, filtFiltLog, ~] = tool_filtFiltLogStr(handles);
+
+%check error
+if(error == 0)
+    %plot original log Vs filtfilt one
+    tool_plotFiltFiltLog(handles, filtFiltLog);
+end
+
 
 
 % --- Executes on button press in b_addToLog.
 function b_addToLog_Callback(hObject, eventdata, handles)
-% hObject    handle to b_addToLog (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+%filtfilt yawRate and yaw
+[error, filtFiltLog, nameFiltFilt] = tool_filtFiltLogStr(handles);
+
+%check error
+if(error == 0)
+    %add filt filt log to log list
+    eval(['handles.logs.' nameFiltFilt ' = filtFiltLog;']);
+    guidata(hObject, handles);
+    %update log list
+    tool_updateLogList(handles);
+end
+
+
+% --- Executes on button press in b_exportToWork.
+function b_exportToWork_Callback(hObject, eventdata, handles)
+[error, modelSelected, ~, modelName] = tool_getSelectedIdModel(handles);
+
+%check error
+if(error == 0)
+    %save into workspace
+    eval(['assignin(''base'', ''' modelName ''', modelSelected);']);
+end
