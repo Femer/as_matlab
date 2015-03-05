@@ -17,9 +17,8 @@ rudderMax = constraints(1);% cmd
 rudderVelocity = constraints(2); %cmd/s
 
 %deltas
-deltaYawRate = deltas(1); %in deg!
-deltaYaw = deltas(2); %in deg!
-deltaRudder = deltas(3);
+deltaYaw = deltas(1); %in deg!
+deltaRudder = deltas(2);
 
 
 %build cost matrices
@@ -77,7 +76,6 @@ fprintf(fileID, '1\t50\tASO_MPC_UB1\t%0.10f\t9\n', upperBound(1));
 fprintf(fileID, '1\t50\tASO_MPC_UB2\t%0.10f\t9\n', upperBound(2));
 
 %delta values
-fprintf(fileID, '1\t50\tASO_DLT_YR_D\t%0.10f\t9\n', deltaYawRate);
 fprintf(fileID, '1\t50\tASO_DLT_Y_D\t%0.10f\t9\n', deltaYaw);
 fprintf(fileID, '1\t50\tASO_DLT_RD_CM\t%0.10f\t9\n', deltaRudder);
 

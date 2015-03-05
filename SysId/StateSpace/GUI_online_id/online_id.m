@@ -63,7 +63,7 @@ addpath('MpcVsLqr');
 
 %default values for weights, deltas and constraints
 weights = [1, 3, 1, 35]; 
-deltas = [10, 10, 0.15]; 
+deltas = [12, 0.16]; 
 constraints = [1, 3.6];
 set(handles.t_weights, 'Data', weights);
 set(handles.t_deltas, 'Data', deltas);

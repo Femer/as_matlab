@@ -60,7 +60,7 @@ fprintf(fileID, 'int32_t mpc_sampling_time_us = %d;\n', round(mpcModel.Dt * 1e6)
 fprintf(fileID, 'int32_t pred_horz_steps = %d;\n', predHor_steps);
 
 %print delta values and 2 other params
-fprintf(fileID, 'float delta[] = {%ff,%ff, %ff};\n', deg2rad(deltas(1)), deg2rad(deltas(2)), deltas(3));
+fprintf(fileID, 'float delta[] = {%ff, %ff};\n', deg2rad(deltas(1)), deg2rad(deltas(2)));
 fprintf(fileID, 'float min_time_s = %ff;\n', 2);
 fprintf(fileID, 'float safety_time_stop_tack_s = %ff;\n', 320);
 

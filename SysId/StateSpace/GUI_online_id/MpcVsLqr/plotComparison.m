@@ -82,8 +82,6 @@ for i = 1 : 2
             'LineWidth', 1.9, 'Color', [245 86 1] ./ 255);
     end
     
-    plot([controllerTime(1) controllerTime(end)], [deltas(1) deltas(1)], 'c--', 'LineWidth', 1.9);
-    plot([controllerTime(1) controllerTime(end)], -[deltas(1)  deltas(1)], 'c--', 'LineWidth', 1.9);
     grid on;
     ylabel('[deg/s]');
     xlabel('Time [sec]');
@@ -104,8 +102,8 @@ for i = 1 : 2
             'LineWidth', 1.9, 'Color', [245 86 1] ./ 255);
     end
     
-    plot([controllerTime(1) controllerTime(end)], [deltas(2) deltas(2)], 'c--', 'LineWidth', 1.9);
-    plot([controllerTime(1) controllerTime(end)], -[deltas(2)  deltas(2)], 'c--', 'LineWidth', 1.9);
+    plot([controllerTime(1) controllerTime(end)], [deltas(1) deltas(1)], 'c--', 'LineWidth', 1.9);
+    plot([controllerTime(1) controllerTime(end)], -[deltas(1)  deltas(1)], 'c--', 'LineWidth', 1.9);
     
     grid on;
     ylabel('[deg]');
@@ -125,8 +123,8 @@ for i = 1 : 2
     plot([controllerTime(1) controllerTime(end)], ...
          [-rudderLimit(i) -rudderLimit(i)], 'r-.', 'LineWidth', lW0);
     
-    plot([controllerTime(1) controllerTime(end)], [deltas(3) deltas(3)], 'c--', 'LineWidth', 1.9);
-    plot([controllerTime(1) controllerTime(end)], -[deltas(3)  deltas(3)], 'c--', 'LineWidth', 1.9);
+    plot([controllerTime(1) controllerTime(end)], [deltas(2) deltas(2)], 'c--', 'LineWidth', 1.9);
+    plot([controllerTime(1) controllerTime(end)], -[deltas(2)  deltas(2)], 'c--', 'LineWidth', 1.9);
     
     grid on;
     ylabel('Rudder [cmd]');
